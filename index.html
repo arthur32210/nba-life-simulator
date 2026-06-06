@@ -190,6 +190,18 @@ function saveApiKey(){
   apiKey=k; localStorage.setItem("nba_gemini_key",k); showSetup();
 }
 
+function getGeminiHeaders(){
+  const headers={"Content-Type":"application/json"};
+  if(apiKey.startsWith("AQ.")){
+    headers.Authorization=`Bearer ${apiKey}`;
+  }else if(apiKey.startsWith("AIza")){
+    headers["x-goog-api-key"]=apiKey;
+  }else{
+    headers["x-goog-api-key"]=apiKey;
+  }
+  return headers;
+}
+
 function showSetup(){
   document.getElementById("apikey-screen").style.display="none";
   document.getElementById("setup-screen").style.display="block";
@@ -201,7 +213,7 @@ function renderStep(){
   pb.innerHTML=[0,1,2].map(i=>`<div class="prog-seg${i<=setupStep?" done":""}"></div>`).join("");
   const c=document.getElementById("setup-content");
   if(setupStep===0){
-    c.innerHTML<`<div style="text-align:center;margin-bottom:20px">
+    c.innerHTML=`<div style="text-align:center;margin-bottom:20px">
       <div style="font-size:48px;margin-bottom:8px">🏀</div>
       <h1 style="font-size:22px;font-weight:900;margin-bottom:6px" class="grad-text">NBA 人生模擬器</h1>
       <p style="font-size:12px;color:#64748b;line-height:1.8">位置系統 · 家庭背景 · 體力槽 · 隱藏業力 · 退休稱號</p>
@@ -235,9 +247,9 @@ function nextStep(){ if(setupStep===0&&!nameVal.trim())return; setupStep++; rend
 function startGame(){
   if(!selBg)return;
   playerName=nameVal.trim(); position=selPos; background=selBg;
-  stats={basketball:10,physical:10,mental:10,wealth:background.wealth,romance:5,family:50,fame:0,happiness070};
+  stats={basketball:10,physical:10,mental:10,wealth:background.wealth,romance:5,family:50,fame:0,happiness:70};
   for(const[k,v]of Object.entries(position.bonuses))stats[k]=Math.min(100,(stats[k]||0)+v);
-  for(const[kv] of Object.entries(background.bonuses))stats[k]=Math.min(100,(stats[k]||0)+v);
+  for(const[k,v]of Object.entries(background.bonuses))stats[k]=Math.min(100,(stats[k]||0)+v);
   stamina=100;karma=50;round=0;
   document.getElementById("setup-screen").style.display="none";
   document.getElementById("game-screen").style.display="block";
@@ -246,7 +258,7 @@ function startGame(){
   callGemini(`我的名字是「${playerName}」，位置${position.key}，背景${background.key}。從台灣童年第一次接觸籃球開始，嚴格遵守格式輸出。`);
 }
 
-arync function callGemini(msg){
+async function callGemini(msg){
   showLoad(true);
   document.getElementById("story-box").style.display="none";
   document.getElementById("options-list").innerHTML="";
@@ -259,11 +271,15 @@ arync function callGemini(msg){
 
   try{
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,{
-      method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":apiKey},
+      method:"POST",headers:getGeminiHeaders(),
       body:JSON.stringify({system_instruction:{parts:[{text:SYSTEM_PROMPT}]},contents:conversation,generationConfig:{maxOutputTokens:1200,temperature:0.95}})
     });
-    const d=await r.json();
-    if(d.error){showErr("API錯誤："+d.error.message+(d.error.message.includes("API_KEY")?" — 請確認 Key 是否正確":"")); return;}
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||d.error){
+      const msg=d.error?.message||r.statusText||"未知錯誤";
+      showErr(`API錯誤（HTTP ${r.status}）：${msg}`);
+      return;
+    }
     const raw=d.candidates?.[0]?.content?.parts?.[0]?.text||"（回應錯誤）";
     conversation.push({role:"model",parts:[{text:raw}]});
     processResp(raw);
@@ -299,7 +315,7 @@ function processResp(raw){
     const dp=Object.entries(opt.deltas).filter(([k])=>SMETA[k]||k==="stamina");
     const d=document.createElement("button");
     d.className="opt-btn";d.id="opt-"+opt.key;
-    d.innerHTML=`<div style="display:flex;align-items:flex-start;gap:9px">
+    d.innerHTML<`<div style="display:flex;align-items:flex-start;gap:9px">
       <span class="opt-key">${opt.key}</span><span style="flex:1">${opt.label}</span></div>
       ${dp.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;padding-left:2px">${dp.map(([k,v])=>dtag(v,k==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||""))).join("")}</div>`:""}`;
     d.onclick=()=>pickOpt(opt);
@@ -331,7 +347,7 @@ function sendFree(){
 
 function triggerEnd(){
   const b=stats.basketball||0,f=stats.fame||0,h=stats.happiness||0,fam=stats.family||0,w=stats.wealth||0;
-  let t="台灣球員",s="完成了屬於你的籃球旅程。";
+  let t="台灣球員",s="完成了屬於$��的籃球旅程。";
   if(b>88&&f>85&&karma>65){t="🏆 籃球之神";s="技術、名氣、品格三者兼備。史書留名。";}
   else if(f>70&&karma>50&&history.length>12){t="🇹🇼 台灣之光";s="從台灣出發，讓世界看見你。";}
   else if(f>55&&karma<25){t="💥 醜聞球星";s="才華洋溢，卻逃不過業力反撲。";}
@@ -360,11 +376,11 @@ function renderStrip(){
 }
 function renderStatRows(){
   const sc=stamina,col=sc>60?"#4ade80":sc>30?"#fbbf24":"#f87171";
-  document.getElementById("stam-bar-wrap").innerHTML<`<div class="stam-wrap"><span class="stam-label">⚡ 體力</span><div class="stam-track"><div class="stam-fill" style="width:${sc}%;background:${col}"></div></div><span class="stat-val" style="color:${col}">${sc}/100</span></div>`;
+  document.getElementById("stam-bar-wrap").innerHTML=`<div class="stam-wrap"><span class="stam-label">⚡ 體力</span><div class="stam-track"><div class="stam-fill" style="width:${sc}%;background:${col}"></div></div><span class="stat-val" style="color:${col}">${sc}/100</span></div>`;
   document.getElementById("stat-rows").innerHTML=Object.entries(SMETA).map(([k,m])=>`<div class="stat-row"><span class="stat-label">${m.l}</span><div class="stat-track"><div class="stat-fill" style="width:${Math.min(100,Math.max(0,stats[k]||0))}%;background:${m.c}"></div></div><span class="stat-val" style="color:${m.c}">${stats[k]||0}</span></div>`).join("");
 }
 function renderHist(){
-  if(!history.length){document.getElementById("hist-list").innerHTML=`<span style="font-size:12px;color:#475569">尚無記錄</span>`;return;}
+  if(!history.length){document.getElementById("hist-list").innerHTML<`<span style="font-size:12px;color:#475569">尚無記錄</span>`;return;}
   document.getElementById("hist-list").innerHTML=[...history].reverse().map(h=>`<div style="font-size:12px;color:#64748b;margin-bottom:9px;border-left:2px solid rgba(249,115,22,0.25);padding-left:9px"><div style="color:#94a3b8;margin-bottom:3px">#${h.round} ${h.choice}</div><div style="display:flex;gap:3px;flex-wrap:wrap">${Object.entries(h.deltas).map(([k,v])=>{const icon=k==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||"");return`<span style="font-size:9px;color:${v>0?"#4ade80":"#f87171"}">${icon}${v>0?"+"+v:v}</span>`;}).join("")}</div></div>`).join("");
 }
 function toggleDrawer(w){
@@ -386,12 +402,3 @@ function showFloat(deltas){
   fd.innerHTML=Object.entries(deltas).filter(([k])=>SMETA[k]||k==="stamina").map(([k,v])=>{
     const icon=k==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||"");
     const name=k==="stamina"?"體力":(SMETA[k]?.l.split(" ").slice(1).join(" ")||k);
-    const col=v>0?"#4ade80":"#f87171";
-    return`<div class="fdelta-item" style="border:1.5px solid ${col};color:${col}">${icon} ${name} ${v>0?"+"+v:v}</div>`;
-  }).join("");
-  fd.style.display="flex";setTimeout(()=>{fd.style.display="none";},2000);
-}
-</script>
-</body>
-</html>
-                               
