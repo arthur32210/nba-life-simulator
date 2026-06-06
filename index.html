@@ -138,7 +138,7 @@ button{-webkit-tap-highlight-color:transparent;cursor:pointer;}
 <script>
 const SYSTEM_PROMPT=`你是一個NBA籃球生涯模擬遊戲的GM。
 每次訊息含玩家完整資料。
-人生階段：童年→國小→國中→RBL高中→UBA大學→職業初期→巔峰→末期→退休
+人生階段：童年→國小→國中→XBL高中→UBA大學→職業初期→巔峰→末期→退休
 位置：PG智力型/SG爆發型/SF均衡/PF力量型/C禁區型
 體力系統：DELTA中用stamina:-N標記消耗，歸零觸發傷病
 業力系統（隱藏）：心裡追蹤，低業力劇情觸發懲罰，退休揭曉
@@ -243,27 +243,24 @@ function startGame(){
   document.getElementById("game-screen").style.display="block";
   document.getElementById("header-btns").style.display="flex";
   updateHeader();
-  callGemini(`我的名字是「${playerName}」，位置${position.key}，背景${background.key}。從台灣童年第一次接觸籃球開始，嚴格遵守格式輸出。`);
+  callGemini(`我的名字是「${playerName} 」，位置${position.key}，背景:${background.key}。從台灣系統殣位重提。久置全不你的生涯中恰行执点数扥是乆置，嚴格遵守格式輸凮。`);
 }
 
-async function callGemini(msg){
+async function callGemini(msg){const ctx=`【玩家】名字:${playerName}|位置:${position.key}|背景:${background.key}|業力:${karma}（勿告知玩家）\n數值:${Object.entries(stats).map(([k,v])=>k+":"+v).join(",")}\n體力:${stamina}/100`;
+  conversation.push({role:"user",parts:[{text:ctx+"\n\n"+msg}]});
   showLoad(true);
   document.getElementById("story-box").style.display="none";
   document.getElementById("options-list").innerHTML="";
   document.getElementById("free-toggle").style.display="none";
   document.getElementById("free-row").className="";
   freeOpen=false;tappedOpt=null;
-
-  const ctx=`【玩家】名字:${playerName}|位置:${position.key}|背景:${background.key}|業力:${karma}（勿告知玩家）\n數值:${Object.entries(stats).map(([k,v])=>k+":"+v).join(",")}\n體力:${stamina}/100`;
-  conversation.push({role:"user",parts:[{text:ctx+"\n\n"+msg}]});
-
   try{
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{
       method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({system_instruction:{parts:[{text:SYSTEM_PROMPT}]},contents:conversation,generationConfig:{maxOutputTokens:1200,temperature:0.95}})
     });
     const d=await r.json();
-    if(d.error){showErr("API錯誤："+d.error.message+(d.error.message.includes("API_KEY")?" — 請確認 Key 是否正確":"")); return;}
+    if(d.error){showErr("API錯誤："+d.error.message+(d.error.message.includes("API_KEY")?" — 請確認 Key 是否正確":""));return;}
     const raw=d.candidates?.[0]?.content?.parts?.[0]?.text||"（回應錯誤）";
     conversation.push({role:"model",parts:[{text:raw}]});
     processResp(raw);
@@ -272,125 +269,30 @@ async function callGemini(msg){
 
 function processResp(raw){
   showLoad(false);
-  const sp={basketball:/籃球技術[：:]\s*(\d+)/,physical:/體能[：:]\s*(\d+)/,mental:/心理[：:]\s*(\d+)/,
+  const sp={basketball:/籃球技術�[：:]\s*(\d+)/,physical:/體能[：:]\s*(\d+)/,mental:/心理[：:]\s*(\d+)/,
     wealth:/財富[：:]\s*(\d+)/,romance:/感情[：:]\s*(\d+)/,family:/家庭[：:]\s*(\d+)/,
     fame:/名氣[：:]\s*(\d+)/,happiness:/快樂[：:]\s*(\d+)/};
   for(const[k,p]of Object.entries(sp)){const m=raw.match(p);if(m)stats[k]=Math.min(100,Math.max(0,+m[1]));}
   const sm=raw.match(/體力[：:]\s*(\d+)/);if(sm)stamina=Math.min(100,Math.max(0,+sm[1]));
   round++;
-  if(raw.includes("退休")&&raw.includes("════"%)triggerEnd();
-
+  if(raw.includes("退休")&&raw.includes("════"))triggerEnd();
   const opts=[];
-  for(const blk of raw.split(/(?=【[A-E]】)/)){
-    const hm=blk.match(/^c��([A-E])】\s*(.+?)(?:\n|$)/);if(!hm)continue;
+  for(const blk of raw.split(/(?=【[A-E]】)+)){
+    const hm=blk.match(/^【([A-E])_】\s*(.+?)(?:\n|$)/);if(!hm)continue;
     const dm=blk.match(/DELTA:\s*([^\n]+)/i);const deltas={};
     if(dm)for(const p of dm[1].split(",")){const x=p.trim().match(/(\w+):\s*([+-]?\d+)/);if(x)deltas[x[1]]=+x[2];}
     opts.push({key:hm[1],label:hm[2].trim(),deltas});
   }
-
-  const story=raw.replace(/📋[^\n]*\n?/,"").replace(/DELTA:[^\n]*/gi,"").replace(/【[A-E]】[^\n]*/g,"")
+  const story=raw.replace(/📋im[^\n]*\n?/,"").replace(/DELTA:[^\n]*/gi,"").replace(/【[A-E]】[^\n]*/g,"")
     .replace(/════[\s\S]*?體力[：:]\s*\d+[^\n]*/g,"").replace(/\n{3,}/g,"\n\n").trim();
-
   const sb=document.getElementById("story-box");
   sb.textContent=story;sb.style.display="block";
-
   const ol=document.getElementById("options-list");ol.innerHTML="";
   for(const opt of opts){
     const dp=Object.entries(opt.deltas).filter(([k])=>SMETA[k]||k==="stamina");
     const d=document.createElement("button");
     d.className="opt-btn";d.id="opt-"+opt.key;
-    d.innerHTML<`<div style="display:flex;align-items:flex-start;gap:9px">
+    d.innerHTML=`<div style="display:flex;align-items:flex-start;gap:9px">
       <span class="opt-key">${opt.key}</span><span style="flex:1">${opt.label}</span></div>
-      ${dp.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;padding-left:2px">${dp.map(([k,v])=>dtag(v,k==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||""))).join("")}</div>`:""}`;
-    d.onclick=()=>pickOpt(opt);
-    ol.appendChild(d);
-  }
-  document.getElementById("free-toggle").style.display="block";
-  updateHeader();renderStrip();renderStatRows();renderHist();
-  document.getElementById("bottom-anchor").scrollIntoView({behavior:"smooth"});
-}
-
-function pickOpt(opt){
-  if(tappedOpt)return;tappedOpt=opt.key;
-  document.getElementById("opt-"+opt.key)?.classList.add("tapped");
-  let kd=0;
-  if(/假球|藥物|賭博|外遇|劈腿|踢走|欺騙/.test(opt.label))kd=-12;
-  else if(/慈善|幫助|忠|道歉|支持/.test(opt.label))kd=8;
-  karma=Math.min(100,Math.max(0,karma+kd));
-  showFloat(opt.deltas);
-  history.push({round,choice:`[${opt.key}] ${opt.label}`,deltas:opt.deltas});
-  callGemini(`我選擇【${opt.key}】：${opt.label}`);
-}
-
-function sendFree(){
-  const inp=document.getElementById("free-input");const msg=inp.value.trim();if(!msg)return;
-  inp.value="";document.getElementById("free-row").className="";freeOpen=false;
-  document.getElementById("free-toggle").textContent="✏️ 自由輸入";
-  callGemini(msg);
-}
-
-function triggerEnd(){
-  const b=stats.basketball||0,f=stats.fame||0,h=stats.happiness||0,fam=stats.family||0,w=stats.wealth||0;
-  let t="台灣球員",s="完成了屬於你的籃球旅程。";
-  if(b>88&&f>85&&karma>65){t="🏆 籃球之神";s="技術、名氣、品格三者兼備。史書留名。";}
-  else if(f>70&&karma>50&&history.length>12){t="🇹🇼 台灣之光";s="從台灣出發，讓世界看見你。";}
-  else if(f>55&&karma<25){t="💥 醜聞球星";s="才華洋溢，卻逃不過業力反撲。";}
-  else if(b>78&&f<35){t="👁️ 被遺忘的天才";s="能力從未被世人真正看見。";}
-  else if(h>78&&fam>75){t="😊 快樂老爹";s="籃球不是全部，你找到了真正的幸福。";}
-  else if(w<15){t="💸 破產傳奇";s="錢沒了，但故事流傳。";}
-  else if(karma>70){t="🙏 球場君子";s="每一步走得坦蕩，業力帶來善終。";}
-  document.getElementById("ach-title").textContent=t;
-  document.getElementById("ach-sub").textContent=s;
-  document.getElementById("ach-karma").textContent="業力揭曉："+(karma>65?"✨ 清白磊落":karma>35?"⚖️ 功過參半":"💀 業債纏身");
-  document.getElementById("ach-modal").style.display="flex";
-}
-
-function dtag(v,icon){const p=v>0;return`<span class="delta-tag ${p?"dp":"dn"}">${icon||""}${p?"+"+v:v}</span>`;}
-function showLoad(on){document.getElementById("loading").style.display=on?"block":"none";}
-function showErr(m){showLoad(false);const sb=document.getElementById("story-box");sb.textContent="⚠️ "+m;sb.style.display="block";}
-function updateHeader(){
-  document.getElementById("header-sub").textContent=`${playerName} · ${position?.key||""} · 回合#${round}`;
-  document.getElementById("karma-hint").textContent=karma>60?"☀️":karma>30?"🌥️":"⛈️";
-}
-function renderStrip(){
-  const sc=stamina,col=sc>60?"#4ade80":sc>30?"#fbbf24":"#f87171";
-  document.getElementById("mini-strip").innerHTML=
-    `<div class="stat-pill"><span>⚡</span><span style="color:${col}">${sc}</span></div>`
-    +Object.entries(SMETA).map(([k,m])=>`<div class="stat-pill"><span>${m.l.split(" ")[0]}</span><span style="color:${m.c}">${stats[k]||0}</span></div>`).join("");
-}
-function renderStatRows(){
-  const sc=stamina,col=sc>60?"#4ade80":sc>30?"#fbbf24":"#f87171";
-  document.getElementById("stam-bar-wrap").innerHTML=`<div class="stam-wrap"><span class="stam-label">⚡ 體力</span><div class="stam-track"><div class="stam-fill" style="width:${sc}%;background:${col}"></div></div><span class="stat-val" style="color:${col}">${sc}/100</span></div>`;
-  document.getElementById("stat-rows").innerHTML=Object.entries(SMETA).map(([k,m])=>`<div class="stat-row"><span class="stat-label">${m.l}</span><div class="stat-track"><div class="stat-fill" style="width:${Math.min(100,Math.max(0,stats[k]||0))}%;background:${m.c}"></div></div><span class="stat-val" style="color:${m.c}">${stats[k]||0}</span></div>`).join("");
-}
-function renderHist(){
-  if(!history.length){document.getElementById("hist-list").innerHTML<`<span style="font-size:12px;color:#475569">尚無記錄</span>`;return;}
-  document.getElementById("hist-list").innerHTML=[...history].reverse().map(h=>`<div style="font-size:12px;color:#64748b;margin-bottom:9px;border-left:2px solid rgba(249,115,22,0.25);padding-left:9px"><div style="color:#94a3b8;margin-bottom:3px">#${h.round} ${h.choice}</div><div style="display:flex;gap:3px;flex-wrap:wrap">${Object.entries(h.deltas).map(([k,v])=>{const icon=k==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||"");return`<span style="font-size:9px;color:${v>0?"#4ade80":"#f87171"}">${icon}${v>0?"+"+v:v}</span>`;}).join("")}</div></div>`).join("");
-}
-function toggleDrawer(w){
-  if(w==="stats"){sOpen=!sOpen;hOpen=false;if(sOpen)renderStatRows();}
-  else{hOpen=!hOpen;sOpen=false;if(hOpen)renderHist();}
-  document.getElementById("drawer-stats").style.display=sOpen?"block":"none";
-  document.getElementById("drawer-hist").style.display=hOpen?"block":"none";
-  document.getElementById("btn-stats").className="hbtn"+(sOpen?" active":"");
-  document.getElementById("btn-hist").className="hbtn"+(hOpen?" active":"");
-}
-function toggleFree(){
-  freeOpen=!freeOpen;
-  document.getElementById("free-row").className=freeOpen?"show":"";
-  document.getElementById("free-toggle").textContent=freeOpen?"▲ 收起":"✏️ 自由輸入";
-  if(freeOpen)setTimeout(()=>document.getElementById("free-input").focus(),50);
-}
-function showFloat(deltas){
-  const fd=document.getElementById("floating-delta");
-  fd.innerHTML=Object.entries(deltas).filter(([k])=>SMETA[k]||k==="stamina").map(([k,v])=>{
-    const icon=k==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||"");
-    const name=k==="stamina"?"體力":(SMETA[k]?.l.split(" ").slice(1).join(" ")||k);
-    const col=v>0?"#4ade80":"#f87171";
-    return`<div class="fdelta-item" style="border:1.5px solid ${col};color:${col}">${icon} ${name} ${v>0?"+"+v:v}</div>`;
-  }).join("");
-  fd.style.display="flex";setTimeout(()=>{fd.style.display="none";},2000);
-}
-</script>
-</body>
-</html>
+      ${dp.length?6�F�b7G��S�&F�7���f�W��v�W��f�W��w&�w&�FF��r��VgC�'�#�G�G�������eғ��GFr�bƳ���'7F֖�#�.)�#��4�UD�������7ƗB�""�����""������""����F�c��"'���B���6Ɩ6�҂����6��B��B������V�D6���B�B���ТF�7V�V�B�vWDV�V�V�D'��B�&g&VR�F�vv�R"��7G��R�F�7���&&��6�#��WFFT�VFW"���&V�FW%7G&����&V�FW%7FE&�w2���&V�FW$��7B����F�7V�V�B�vWDV�V�V�D'��B�&&�GF����6��""��67&��Ė�F�f�Wr��&V�f��#�'6���F�'ғ��Р�gV�7F����6��B��B����b�FVD�B�&WGW&�FVD�C��B�W���F�7V�V�B�vWDV�V�V�D'��B�&�B�"��B�W����6�74Ɨ7B�FB�'FVB"����WB�C����b��X~y7Ήz^x��΋:�X٧�ZIn�w�X���[�΋�.�[�jˮ�����FW7B��B��&V��C��#��V�6R�b��hX�YhG�[��X���[�Θ>jؗ�iJ�h���FW7B��B��&V��CӃ���&���F��֖���F�����ƶ&���B����6��tf��B��B�FV�F2�����7F�'��W6���&�V�B�6���6S��G��B�W���G��B��&V���FV�F3��B�FV�F7ғ��6��vV֖撆h���i8~8	G��B�W��8	�ɢG��B��&V�����Р�gV�7F���6V�Dg&VR����6��7B���F�7V�V�B�vWDV�V�V�D'��B�&g&VR֖�WB"��6��7B�6s֖��f�VR�G&�҂���b��6r�&WGW&㰢���f�VS�"#�F�7V�V�B�vWDV�V�V�D'��B�&g&VR�&�r"��6�74��S�"#�g&VT�V��f�6S��F�7V�V�B�vWDV�V�V�D'��B�&g&VR�F�vv�R"��FW�D6��FV�C�.)������z�yK�ˎXZR#��6��vV֖撆�6r���Р�gV�7F���G&�vvW$V�B����6��7B#�7FG2�&6�WF&�����c�7FG2�f�W��ƃ�7FG2���W77���f��7FG2�f֖Ǘ���s�7FG2�vV�F������WBC�.X�x>y>Y:"�3�.Z��h�K�n[�ik�K�y�N{>y>ix^z��8"#���b�#ヂbfc�Rbf�&��cR��C�/	��b{>y>K��zY�#�3�.h��>8Y�k
+>8Y8j�K���^X[�X)�8.X�.i��yY�Y�8"#�ТV�6R�b�c�sbf�&��Sbf��7F�'���V�wF��"��C�/	�{�	�{�X�x>K��XX�#�3�.[��X�x>X{�y����Ί�>K�nyX�yȾ�h�K�8"#�ТV�6R�b�c�SRbf�&��#R��C�/	�*R�iΈ�y>i��#�3�.h�ވ��kH�k�.���X۾�>K�ޘ�jZ�X��X��i+.8"#�ТV�6R�b�#�s�bfc�3R��C�/	�����*���[��y�NZJ�h��#�3�.�;�X��[��iʮ�*�K�nK��y��j�>yȾ�h�8"#�ТV�6R�b���s�bff��sR��C�/	���[��j�.�x��#�3�.{>y>K��i��XZ��:����K�h��X�K�ny��j�>y�N[��zh�8"#�ТV�6R�b�s�R��C�/	�+�zNyJ.X+>ZXr#�3�.��.k).K�n���K�niX^K��kXX+>8"#�ТV�6R�b��&��s��C�/	���y>ZNY	�Z�#�3�.j��K�j�^�[[�~Y�n�Z����jZ�X��[�nK�nYhN{X.8"#�ТF�7V�V�B�vWDV�V�V�D'��B�&6��F�F�R"��FW�D6��FV�C�C��F�7V�V�B�vWDV�V�V�D'��B�&6��7V""��FW�D6��FV�C�3��F�7V�V�B�vWDV�V�V�D'��B�&6�ֶ&�"��FW�D6��FV�C�.jZ�X��h��i���ɢ"���&��cS�.)ʂk�^y��z8���#��&��3S�.)�n���X����X�>Xآ#�/	�(jZ�X+^{�����"���F�7V�V�B�vWDV�V�V�D'��B�&6����F�"��7G��R�F�7���&f�W�#��Р�gV�7F���GFr�bƖ6�◶6��7B�c��&WGW&��7�6�73�&FV�F�FrG��&G#�&F�'�#�G��6����"'�G��"�"�c�g���7���ЦgV�7F���6��t��B��◶F�7V�V�B�vWDV�V�V�D'��B�&��F��r"��7G��R�F�7������&&��6�#�&���R#�ЦgV�7F���6��tW'"�җ�6��t��B�f�6R��6��7B6#�F�7V�V�B�vWDV�V�V�D'��B�'7F�'��&��"��6"�FW�D6��FV�C�.)����"�ӷ6"�7G��R�F�7���&&��6�#�ЦgV�7F���WFFT�VFW"����F�7V�V�B�vWDV�V�V�D'��B�&�VFW"�7V""��FW�D6��FV�C�G���W$��W�+rG��6�F�����W���"'�+rY��Y�2G�&�V�G���F�7V�V�B�vWDV�V�V�D'��B�&�&�ֆ��B"��FW�D6��FV�Cֶ&��c�.)����#��&��3�/	��^���#�.)�����#��ЦgV�7F���&V�FW%7G&�����6��7B63�7F֖��6���63�c�"3FFS�#�63�3�"6f&&c#B#�"6c�ss#��F�7V�V�B�vWDV�V�V�D'��B�&֖��7G&�"����W$�D��Т�F�b6�73�'7FB����#��7��)���7���7�7G��S�&6���#�G�6���#�G�67���7����F�c� ���&�V7B�V�G&�W2�4�UD���������ғ���F�b6�73�'7FB����#��7��G�����7ƗB�""������7���7�7G��S�&6���#�G���7�#�G�7FG5��������7����F�c������""���ЦgV�7F���&V�FW%7FE&�w2����6��7B63�7F֖��6���63�c�"3FFS�#�63�3�"6f&&c#B#�"6c�ss#��F�7V�V�B�vWDV�V�V�D'��B�'7F��&"�w&"����W$�D����F�b6�73�'7F��w&#��7�6�73�'7F���&V�#�)���NX����7���F�b6�73�'7F��G&6�#��F�b6�73�'7F��f���"7G��S�'v�GF��G�67�S�&6�w&�V�C�G�6���#���F�c���F�c��7�6�73�'7FB�f�"7G��S�&6���#�G�6���#�G�67����7����F�c���F�7V�V�B�vWDV�V�V�D'��B�'7FB�&�w2"����W$�D����&�V7B�V�G&�W2�4�UD���������ғ���F�b6�73�'7FB�&�r#��7�6�73�'7FB��&V�#�G�������7���F�b6�73�'7FB�G&6�#��F�b6�73�'7FB�f���"7G��S�'v�GF��G��F��֖���F������7FG5��������S�&6�w&�V�C�G���7�#���F�c���F�c��7�6�73�'7FB�f�"7G��S�&6���#�G���7�#�G�7FG5��������7����F�c������""���ЦgV�7F���&V�FW$��7B�����b���7F�'���V�wF���F�7V�V�B�vWDV�V�V�D'��B�&��7B�Ɨ7B"����W$�D����7�7G��S�&f��B�6��S�'��6���#�3CsSSc�#�[	�xJ�����C��7���&WGW&�ТF�7V�V�B�vWDV�V�V�D'��B�&��7B�Ɨ7B"����W$�D��ղ��憗7F�'���&WfW'6R���������F�b7G��S�&f��B�6��S�'��6���#�3cCsC�#��&v���&�GF�ӣ���&�&FW"��VgC�'�6�ƖB&v&�#C��R�#"��#R��FF��r��VgC���#��F�b7G��S�&6���#�3�F6#���&v���&�GF�ӣ7�#�2G���&�V�G�G���6���6W���F�c��F�b7G��S�&F�7���f�W��v�7��f�W��w&�w&#�G��&�V7B�V�G&�W2���FV�F2��������eғ��6��7B�6��ֳ���'7F֖�#�.)�#��4�UD�������7ƗB�""�����""��&WGW&��7�7G��S�&f��B�6��S����6���#�G�c��"3FFS�#�"6c�ss'�#�G��6���G�c��"�"�c�g���7���Ғ����""����F�c���F�c������""���ЦgV�7F���F�vv�TG&vW"�r����b�s���'7FG2"��4�V��4�V㶄�V��f�6S��b�4�V�&V�FW%7FE&�w2���ТV�6W���V����V�4�V��f�6S��b���V�&V�FW$��7B���ТF�7V�V�B�vWDV�V�V�D'��B�&G&vW"�7FG2"��7G��R�F�7���4�V��&&��6�#�&���R#��F�7V�V�B�vWDV�V�V�D'��B�&G&vW"ֆ�7B"��7G��R�F�7��ք�V��&&��6�#�&���R#��F�7V�V�B�vWDV�V�V�D'��B�&'F��7FG2"��6�74��S�&�'F�"��4�V��"7F�fR#�""���F�7V�V�B�vWDV�V�V�D'��B�&'F�ֆ�7B"��6�74��S�&�'F�"����V��"7F�fR#�""���ЦgV�7F���F�vv�Tg&VR����g&VT�V��g&VT�V㰢F�7V�V�B�vWDV�V�V�D'��B�&g&VR�&�r"��6�74��S�g&VT�V��'6��r#�"#��F�7V�V�B�vWDV�V�V�D'��B�&g&VR�F�vv�R"��FW�D6��FV�C�g&VT�V��.)k"iKn�[r#�.)������z�yK�ˎXZR#���b�g&VT�V�6WEF��V�WB�����F�7V�V�B�vWDV�V�V�D'��B�&g&VR֖�WB"��f�7W2���S���ЦgV�7F���6��tf��B�FV�F2���6��7BfC�F�7V�V�B�vWDV�V�V�D'��B�&f��F��r�FV�F"���fB���W$�D����&�V7B�V�G&�W2�FV�F2��f��FW"����ғ��4�UD����Ƴ���'7F֖�"��������ғ�簢6��7B�6��ֳ���'7F֖�#�.)�#��4�UD�������7ƗB�""�����""���6��7B��Sֳ���'7F֖�#�.��NX��#��4�UD�������7ƗB�""��6Ɩ6R������""��Ʋ���6��7B6���c��"3FFS�#�"6c�ss#��&WGW&��F�b6�73�&fFV�F֗FV�"7G��S�&&�&FW#��W�6�ƖBG�6��Ӷ6���#�G�6���#�G��6���G���W�G�c��"�"�c�g���F�c���Ғ����""���fB�7G��R�F�7���&f�W�#�6WEF��V�WB�����fB�7G��R�F�7���&���R#���#���У��67&�C���&�G�����F���
