@@ -151,7 +151,7 @@ DELTA: basketball:+5, stamina:-10
 (B到E同格式)
 DELTA規則：每項影響2~4數值+stamina，能力值±1~20，stamina -5~-25
 4) ════ 📊狀態 ════
-籃球技術:[值]|體胝:[值]|心理:[值]|財富:[值]
+籃球技術:[值]|體能:[值]|心理:[值]|財富:[值]
 感情:[值]|家庭:[值]|名氣:[值]|快樂:[值]|體力:[值]/100
 台灣籃球文化真實（HBL/SBL/UBA/瓊斯盃），NBA真實名稱可用，R18暗示不露骨`;
 
@@ -237,7 +237,7 @@ function startGame(){
   playerName=nameVal.trim(); position=selPos; background=selBg;
   stats={basketball:10,physical:10,mental:10,wealth:background.wealth,romance:5,family:50,fame:0,happiness070};
   for(const[k,v]of Object.entries(position.bonuses))stats[k]=Math.min(100,(stats[k]||0)+v);
-  for(const[k,v]of Object.entries(background.bonuses))stats[k]=Math.min(100,(stats[k]||0)+v);
+  for(const[kv] of Object.entries(background.bonuses))stats[k]=Math.min(100,(stats[k]||0)+v);
   stamina=100;karma=50;round=0;
   document.getElementById("setup-screen").style.display="none";
   document.getElementById("game-screen").style.display="block";
@@ -258,8 +258,8 @@ arync function callGemini(msg){
   conversation.push({role:"user",parts:[{text:ctx+"\n\n"+msg}]});
 
   try{
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{
-      method:"POST",headers:{"Content-Type":"application/json"},
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,{
+      method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":apiKey},
       body:JSON.stringify({system_instruction:{parts:[{text:SYSTEM_PROMPT}]},contents:conversation,generationConfig:{maxOutputTokens:1200,temperature:0.95}})
     });
     const d=await r.json();
@@ -276,9 +276,9 @@ function processResp(raw){
     wealth:/財富[：:]\s*(\d+)/,romance:/感情[：:]\s*(\d+)/,family:/家庭[：:]\s*(\d+)/,
     fame:/名氣[：:]\s*(\d+)/,happiness:/快樂[：:]\s*(\d+)/};
   for(const[k,p]of Object.entries(sp)){const m=raw.match(p);if(m)stats[k]=Math.min(100,Math.max(0,+m[1]));}
-  const sm=raw.match(/體力:]\s*(\d+)/);if(sm){stamina=Math.min(100,Math.max(0,+sm[1]));}
+  const sm=raw.match(/體力[：:]\s*(\d+)/);if(sm)stamina=Math.min(100,Math.max(0,+sm[1]));
   round++;
-  if(raw.includes("退休")&&raw.includes("════")){triggerEnd();}
+  if(raw.includes("退休")&&raw.includes("════"))triggerEnd();
 
   const opts=[];
   for(const blk of raw.split(/(?=【[A-E]】)/)){
@@ -360,7 +360,7 @@ function renderStrip(){
 }
 function renderStatRows(){
   const sc=stamina,col=sc>60?"#4ade80":sc>30?"#fbbf24":"#f87171";
-  document.getElementById("stam-bar-wrap").innerHTML=`<div class="stam-wrap"><span class="stam-label">⚡ 體力</span><div class="stam-track"><div class="stam-fill" style="width:${sc}%;background:${col}"></div></div><span class="stat-val" style="color:${col}">${sc}/100</span></div>`;
+  document.getElementById("stam-bar-wrap").innerHTML<`<div class="stam-wrap"><span class="stam-label">⚡ 體力</span><div class="stam-track"><div class="stam-fill" style="width:${sc}%;background:${col}"></div></div><span class="stat-val" style="color:${col}">${sc}/100</span></div>`;
   document.getElementById("stat-rows").innerHTML=Object.entries(SMETA).map(([k,m])=>`<div class="stat-row"><span class="stat-label">${m.l}</span><div class="stat-track"><div class="stat-fill" style="width:${Math.min(100,Math.max(0,stats[k]||0))}%;background:${m.c}"></div></div><span class="stat-val" style="color:${m.c}">${stats[k]||0}</span></div>`).join("");
 }
 function renderHist(){
@@ -394,4 +394,4 @@ function showFloat(deltas){
 </script>
 </body>
 </html>
-                                         
+                               
