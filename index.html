@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="theme-color" content="#020617"/>
-<title>ð NBA äººçæ¨¡æ¬å¨</title>
+<title>🏀 NBA 人生模擬器</title>
 <link rel="manifest" href="manifest.json"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet"/>
@@ -78,33 +78,33 @@ button{-webkit-tap-highlight-color:transparent;cursor:pointer;}
 <body>
 <div id="app">
   <div id="header">
-    <span style="font-size:22px">ð</span>
+    <span style="font-size:22px">🏀</span>
     <div style="flex:1;min-width:0">
       <div id="header-title" class="grad-text">NBA DREAM LIFE</div>
-      <div id="header-sub">Gemini ç¨ç«ç</div>
+      <div id="header-sub">Gemini 獨立版</div>
     </div>
     <div id="header-btns" style="display:none">
-      <span id="karma-hint" style="font-size:10px">âï¸</span>
-      <button class="hbtn" id="btn-stats" onclick="toggleDrawer('stats')">ð</button>
-      <button class="hbtn" id="btn-hist"  onclick="toggleDrawer('hist')">ð</button>
+      <span id="karma-hint" style="font-size:10px">☀️</span>
+      <button class="hbtn" id="btn-stats" onclick="toggleDrawer('stats')">📊</button>
+      <button class="hbtn" id="btn-hist"  onclick="toggleDrawer('hist')">📜</button>
     </div>
   </div>
   <div id="drawer-stats" class="drawer" style="display:none"><div id="stam-bar-wrap"></div><div id="stat-rows"></div></div>
-  <div id="drawer-hist"  class="drawer" style="display:none"><div id="hist-list"><span style="font-size:12px;color:#475569">å°ç¡è¨é</span></div></div>
+  <div id="drawer-hist"  class="drawer" style="display:none"><div id="hist-list"><span style="font-size:12px;color:#475569">尚無記錄</span></div></div>
   <div id="scroll">
     <div id="apikey-screen" style="display:flex;flex-direction:column;align-items:center;padding:40px 0;text-align:center">
-      <div style="font-size:48px;margin-bottom:12px">ð</div>
-      <h1 style="font-size:22px;font-weight:900;margin-bottom:8px" class="grad-text">NBA äººçæ¨¡æ¬å¨</h1>
-      <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:16px">Gemini ç¨ç«ç Â· è«é¢ Claude å®ç¨ä½¿ç¨<br/><span style="color:#f97316">â ï¸ å«R18æäººå§å®¹</span></p>
+      <div style="font-size:48px;margin-bottom:12px">🏀</div>
+      <h1 style="font-size:22px;font-weight:900;margin-bottom:8px" class="grad-text">NBA 人生模擬器</h1>
+      <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:16px">Gemini 獨立版 · 脫離 Claude 單獨使用<br/><span style="color:#f97316">⚠️ 含R18成人內容</span></p>
       <div style="font-size:12px;color:#64748b;line-height:1.9;margin-bottom:20px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:10px;padding:14px 16px;width:100%">
-        åå¾åè²» Gemini API Keyï¼<br/>
-        <a class="api-link" href="https://aistudio.google.com/apikey" target="_blank">ð aistudio.google.com/apikey</a><br/>
-        ï¼åè²»é¡åº¦æ¯åé60æ¬¡ï¼è¶³å¤ éæ²ä½¿ç¨ï¼
+        取得免費 Gemini API Key：<br/>
+        <a class="api-link" href="https://aistudio.google.com/apikey" target="_blank">👉 aistudio.google.com/apikey</a><br/>
+        （免費額度每分鐘60次，足夠遊戲使用）
       </div>
-      <input id="apikey-input" class="api-input" type="password" placeholder="è²¼ä¸ä½ ç Gemini API Key (AIza...)" autocomplete="off"/>
-      <button class="primary-btn" onclick="saveApiKey()" style="width:100%">ç¢ºèªä¸¦éå§ â</button>
-      <p style="font-size:10px;color:#334155;margin-top:12px">Key åªå­å¨çè¦½å¨æ¬å°ï¼ä¸ä¸å³ä¼ºæå¨</p>
-      <button onclick="localStorage.removeItem('nba_gemini_key');document.getElementById('apikey-input').value=''" style="background:transparent;border:none;color:#475569;font-size:10px;margin-top:8px;text-decoration:underline">æ¸é¤å·²å²å­ç Key</button>
+      <input id="apikey-input" class="api-input" type="password" placeholder="貼上你的 Gemini API Key (AIza...)" autocomplete="off"/>
+      <button class="primary-btn" onclick="saveApiKey()" style="width:100%">確認並開始 →</button>
+      <p style="font-size:10px;color:#334155;margin-top:12px">Key 只存在瀏覽器本地，不上傳伺服器</p>
+      <button onclick="localStorage.removeItem('nba_gemini_key');document.getElementById('apikey-input').value=''" style="background:transparent;border:none;color:#475569;font-size:10px;margin-top:8px;text-decoration:underline">清除已儲存的 Key</button>
     </div>
     <div id="setup-screen" class="setup-wrap" style="display:none">
       <div class="prog-bar" id="prog-bar"></div>
@@ -112,13 +112,13 @@ button{-webkit-tap-highlight-color:transparent;cursor:pointer;}
     </div>
     <div id="game-screen" style="display:none">
       <div id="mini-strip" style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap"></div>
-      <div id="loading"><div class="ball">ð</div><p>Gemini çæä¸­...</p></div>
+      <div id="loading"><div class="ball">🏀</div><p>Gemini 生成中...</p></div>
       <div id="story-box" class="story-box" style="display:none"></div>
       <div id="options-list"></div>
-      <button id="free-toggle" onclick="toggleFree()">âï¸ èªç±è¼¸å¥</button>
+      <button id="free-toggle" onclick="toggleFree()">✏️ 自由輸入</button>
       <div id="free-row">
-        <input id="free-input" placeholder="è¼¸å¥ä½ çè¡å..." onkeydown="if(event.key==='Enter')sendFree()"/>
-        <button id="free-send" onclick="sendFree()">é</button>
+        <input id="free-input" placeholder="輸入你的行動..." onkeydown="if(event.key==='Enter')sendFree()"/>
+        <button id="free-send" onclick="sendFree()">送</button>
       </div>
       <div id="bottom-anchor" style="height:16px"></div>
     </div>
@@ -126,54 +126,54 @@ button{-webkit-tap-highlight-color:transparent;cursor:pointer;}
   <div id="floating-delta"></div>
   <div id="ach-modal">
     <div class="ach-box">
-      <div style="font-size:52px;margin-bottom:12px">ð</div>
+      <div style="font-size:52px;margin-bottom:12px">🏆</div>
       <div id="ach-title" style="font-size:20px;font-weight:900;color:#fbbf24;margin-bottom:8px;letter-spacing:1px"></div>
       <div id="ach-sub"   style="font-size:13px;color:#94a3b8;line-height:1.7"></div>
       <div id="ach-karma" style="margin-top:16px;font-size:12px;color:#64748b"></div>
-      <button class="primary-btn" style="margin-top:20px;width:auto;padding:12px 28px" onclick="document.getElementById('ach-modal').style.display='none'">ç¹¼çº â</button>
+      <button class="primary-btn" style="margin-top:20px;width:auto;padding:12px 28px" onclick="document.getElementById('ach-modal').style.display='none'">繼續 →</button>
     </div>
   </div>
 </div>
 
 <script>
-const SYSTEM_PROMPT=`ä½ æ¯ä¸åNBAç±ççæ¶¯æ¨¡æ¬éæ²çGMã
-æ¯æ¬¡è¨æ¯å«ç©å®¶å®æ´è³æã
-äººçéæ®µï¼ç«¥å¹´âåå°âåä¸­âHBLé«ä¸­âUBAå¤§å­¸âè·æ¥­åæâå·å³°âæ«æâéä¼
-ä½ç½®ï¼PGæºåå/SGçç¼å/SFåè¡¡/PFåéå/Cç¦åå
-é«åç³»çµ±ï¼DELTAä¸­ç¨stamina:-Næ¨è¨æ¶èï¼æ­¸é¶è§¸ç¼å·ç
-æ¥­åç³»çµ±ï¼é±èï¼ï¼å¿è£¡è¿½è¹¤ï¼ä½æ¥­ååæè§¸ç¼æ²ç½°ï¼éä¼æ­æ
-æ ¼å¼ï¼æ¯æ¬¡å¿é å®æ´è¼¸åºï¼ï¼
-1) ð[åå­]|[éæ®µ]|[ä½ç½®]|é«å:[å¼]/100
-2) äºä»¶æè¿°120-200å­ç¹é«ä¸­æ
-3) äºé¸é ï¼
-ãAãé¸é æå­
+const SYSTEM_PROMPT=`你是一個NBA籃球生涯模擬遊戲的GM。
+每次訊息含玩家完整資料。
+人生階段：童年→國小→國中→RBL高中→UBA大學→職業初期→巔峰→末期→退休
+位置：PG智力型/SG爆發型/SF均衡/PF力量型/C禁區型
+體力系統：DELTA中用stamina:-N標記消耗，歸零觸發傷病
+業力系統（隱藏）：心裡追蹤，低業力劇情觸發懲罰，退休揭曉
+格式（每次必須完整輸出）：
+1) 📋[名字]|[階段]|[位置]|體力:[值]/100
+2) 事件敘述120-200字繁體中文
+3) 五選項：
+【A】選項文字
 DELTA: basketball:+5, stamina:-10
-(Bå°Eåæ ¼å¼)
-DELTAè¦åï¼æ¯é å½±é¿2~4æ¸å¼+staminaï¼è½åå¼Â±1~20ï¼stamina -5~-25
-4) ââââ ðçæ ââââ
-ç±çæè¡:[å¼]|é«è½:[å¼]|å¿ç:[å¼]|è²¡å¯:[å¼]
-ææ:[å¼]|å®¶åº­:[å¼]|åæ°£:[å¼]|å¿«æ¨:[å¼]|é«å:[å¼]/100
-å°ç£ç±çæåçå¯¦ï¼HBL/SBL/UBA/çæ¯çï¼ï¼NBAçå¯¦åç¨±å¯ç¨ï¼R18æç¤ºä¸é²éª¨`;
+(B到E同格式)
+DELTA規則：每項影響2~4數值+stamina，能力值±1~20，stamina -5~-25
+4) ════ 📊狀態 ════
+籃球技術:[值]|體能:[值]|心理:[值]|財富:[值]
+感情:[值]|家庭:[值]|名氣:[值]|快樂:[值]|體力:[值]/100
+台灣籃球文化真實（HBL/SBL/UBA/瓊斯盃），NBA真實名稱可用，R18暗示不露骨`;
 
 const POSITIONS=[
-  {key:"PG",label:"ð¯ PG æ§çå¾è¡",desc:"æºååï¼å³çè¦éç¬¬ä¸",bonuses:{mental:10,basketball:5}},
-  {key:"SG",label:"ð¥ SG å¾åå¾è¡",desc:"çç¼åï¼å¾åæ©å¨",bonuses:{basketball:12}},
-  {key:"SF",label:"â¡ SF å°åé",desc:"åè¡¡åï¼å¨è½æ°å£«",bonuses:{basketball:6,physical:6}},
-  {key:"PF",label:"ð¥ PF å¤§åé",desc:"åéåï¼ç±æ¿æ©å¨",bonuses:{physical:12,wealth:5}},
-  {key:"C", label:"ðï¸ C ä¸­é",desc:"å¶é¸ç¦åï¼åæ°£ææ¢",bonuses:{physical:15}},
+  {key:"PG",label:"🎯 PG 控球後衛",desc:"智力型，傳球視野第一",bonuses:{mental:10,basketball:5}},
+  {key:"SG",label:"🔥 SG 得分後衛",desc:"爆發型，得分機器",bonuses:{basketball:12}},
+  {key:"SF",label:"⚡ SF 小前鋒",desc:"均衡型，全能戰士",bonuses:{basketball:6,physical:6}},
+  {key:"PF",label:"💥 PF 大前鋒",desc:"力量型，籃板機器",bonuses:{physical:12,wealth:5}},
+  {key:"C", label:"🏔️ C 中鋒",desc:"制霸禁區，名氣最慢",bonuses:{physical:15}},
 ];
 const BACKGROUNDS=[
-  {key:"athlete",label:"ð éåå¡å®¶åº­",desc:"ç¶æ¯æ¯åéåå¡",bonuses:{physical:10,basketball:8},wealth:25},
-  {key:"rich",   label:"ð å¯è£å®¶åº­",desc:"å®¶å¢åªæ¸¥è³æºè±å¯",bonuses:{wealth:30,mental:5},wealth:60},
-  {key:"poor",   label:"ð¥ è²§å°è¡é ­",desc:"å¾è¡é ­æèµ·éæ§åè¶³",bonuses:{mental:12,basketball:5},wealth:5},
-  {key:"academic",label:"ð å­¸èå®¶åº­",desc:"è®æ¸äººå®¶æºåçªåº",bonuses:{mental:15},wealth:20},
-  {key:"ordinary",label:"ð  æ®éå®¶åº­",desc:"å¹³å¡åºèº«ä¸åé èªå·±",bonuses:{happiness:10,family:10},wealth:20},
+  {key:"athlete",label:"🏃 運動員家庭",desc:"父母是前運動員",bonuses:{physical:10,basketball:8},wealth:25},
+  {key:"rich",   label:"💎 富裕家庭",desc:"家境優渥資源豐富",bonuses:{wealth:30,mental:5},wealth:60},
+  {key:"poor",   label:"🔥 貧困街頭",desc:"從街頭打起韌性十足",bonuses:{mental:12,basketball:5},wealth:5},
+  {key:"academic",label:"📚 學者家庭",desc:"讀書人家智力突出",bonuses:{mental:15},wealth:20},
+  {key:"ordinary",label:"🏠 普通家庭",desc:"平凡出身一切靠自己",bonuses:{happiness:10,family:10},wealth:20},
 ];
 const SMETA={
-  basketball:{l:"ð ç±ç",c:"#f97316"},physical:{l:"ðª é«è½",c:"#ef4444"},
-  mental:{l:"ð§  å¿ç",c:"#a78bfa"},wealth:{l:"ð° è²¡å¯",c:"#fbbf24"},
-  romance:{l:"â¤ï¸ ææ",c:"#f472b6"},family:{l:"ð¨âð©âð§ å®¶åº­",c:"#34d399"},
-  fame:{l:"ð åæ°£",c:"#38bdf8"},happiness:{l:"ð å¿«æ¨",c:"#a3e635"},
+  basketball:{l:"🏀 籃球",c:"#f97316"},physical:{l:"💪 體能",c:"#ef4444"},
+  mental:{l:"🧠 心理",c:"#a78bfa"},wealth:{l:"💰 財富",c:"#fbbf24"},
+  romance:{l:"❤️ 感情",c:"#f472b6"},family:{l:"👨‍👩‍👧 家庭",c:"#34d399"},
+  fame:{l:"🌟 名氣",c:"#38bdf8"},happiness:{l:"😊 快樂",c:"#a3e635"},
 };
 
 let apiKey="",playerName="",position=null,background=null;
@@ -186,7 +186,7 @@ window.onload=()=>{ const k=localStorage.getItem("nba_gemini_key"); if(k){apiKey
 
 function saveApiKey(){
   const k=document.getElementById("apikey-input").value.trim();
-  if(!k||!k.startsWith("AIza")){alert("è«è¼¸å¥ææç Gemini API Keyï¼ä»¥ AIza éé ­ï¼");return;}
+  if(!k||!k.startsWith("AIza")){alert("請輸入有效的 Gemini API Key（以 AIza 開頭）");return;}
   apiKey=k; localStorage.setItem("nba_gemini_key",k); showSetup();
 }
 
@@ -202,31 +202,31 @@ function renderStep(){
   const c=document.getElementById("setup-content");
   if(setupStep===0){
     c.innerHTML=`<div style="text-align:center;margin-bottom:20px">
-      <div style="font-size:48px;margin-bottom:8px">ð</div>
-      <h1 style="font-size:22px;font-weight:900;margin-bottom:6px" class="grad-text">NBA äººçæ¨¡æ¬å¨</h1>
-      <p style="font-size:12px;color:#64748b;line-height:1.8">ä½ç½®ç³»çµ± Â· å®¶åº­èæ¯ Â· é«åæ§½ Â· é±èæ¥­å Â· éä¼ç¨±è</p>
+      <div style="font-size:48px;margin-bottom:8px">🏀</div>
+      <h1 style="font-size:22px;font-weight:900;margin-bottom:6px" class="grad-text">NBA 人生模擬器</h1>
+      <p style="font-size:12px;color:#64748b;line-height:1.8">位置系統 · 家庭背景 · 體力槽 · 隱藏業力 · 退休稱號</p>
     </div>
-    <input class="name-input" id="name-inp" placeholder="è¼¸å¥ä½ ççå¡å§å..." oninput="nameVal=this.value" onkeydown="if(event.key==='Enter'&&nameVal.trim())nextStep()"/>
-    <button class="primary-btn" onclick="nextStep()" ${nameVal.trim()?"":"disabled"}>é¸æä½ç½® â</button>`;
+    <input class="name-input" id="name-inp" placeholder="輸入你的球員姓名..." oninput="nameVal=this.value" onkeydown="if(event.key==='Enter'&&nameVal.trim())nextStep()"/>
+    <button class="primary-btn" onclick="nextStep()" ${nameVal.trim()?"":"disabled"}>選擇位置 →</button>`;
     // re-bind to track changes
     setTimeout(()=>{
       const ni=document.getElementById("name-inp");
       if(ni) ni.oninput=function(){nameVal=this.value; document.querySelector(".primary-btn").disabled=!nameVal.trim();};
     },0);
   } else if(setupStep===1){
-    c.innerHTML<`<div style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-align:center">ð¯ é¸æå ´ä¸ä½ç½®</div>
+    c.innerHTML<`<div style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-align:center">🎯 選擇場上位置</div>
       ${POSITIONS.map(p=>`<button class="sel-btn${selPos?.key===p.key?" selected":""}" onclick="selPos=POSITIONS.find(x=>x.key==='${p.key}');renderStep()">
         <span class="sel-title">${p.label}</span><span class="sel-desc">${p.desc}</span>
         <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">${Object.entries(p.bonuses).map(([k,v])=>dtag(v,SMETA[k]?.l.split(" ")[0])).join("")}</div>
       </button>`).join("")}
-      <button class="primary-btn" onclick="nextStep()" ${selPos?"":"disabled"}>é¸æèæ¯ â</button>`;
+      <button class="primary-btn" onclick="nextStep()" ${selPos?"":"disabled"}>選擇背景 →</button>`;
   } else {
-    c.innerHTML<`<div style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-align:center">ð¨âð©âð§ é¸æå®¶åº­èæ¯</div>
+    c.innerHTML<`<div style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-align:center">👨‍👩‍👧 選擇家庭背景</div>
       ${BACKGROUNDS.map(b=>`<button class="sel-btn${selBg?.key===b.key?" selected":""}" onclick="selBg=BACKGROUNDS.find(x=>x.key==='${b.key}');renderStep()">
         <span class="sel-title">${b.label}</span><span class="sel-desc">${b.desc}</span>
-        <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">${Object.entries(b.bonuses).map(([k,v])=>dtag(v,SMETA[k]?.l.split(" ")[0])).join("")}${dtag(b.wealth,"ð°")}</div>
+        <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">${Object.entries(b.bonuses).map(([k,v])=>dtag(v,SMETA[k]?.l.split(" ")[0])).join("")}${dtag(b.wealth,"💰")}</div>
       </button>`).join("")}
-      <button class="primary-btn" onclick="startGame()" ${selBg?"":"disabled"}>éå§çæ¶¯ ð</button>`;
+      <button class="primary-btn" onclick="startGame()" ${selBg?"":"disabled"}>開始生涯 🏀</button>`;
   }
 }
 
@@ -243,7 +243,7 @@ function startGame(){
   document.getElementById("game-screen").style.display="block";
   document.getElementById("header-btns").style.display="flex";
   updateHeader();
-  callGemini(`æçåå­æ¯ã${playerName}ãï¼ä½ç½®${position.key}ï¼èæ¯${background.key}ãå¾å°ç£ç«¥å¹´ç¬¬ä¸æ¬¡æ¥è§¸ç±çéå§ï¼å´æ ¼éµå®æ ¼å¼è¼¸åºã`);
+  callGemini(`我的名字是「${playerName}」，位置${position.key}，背景${background.key}。從台灣童年第一次接觸籃球開始，嚴格遵守格式輸出。`);
 }
 
 async function callGemini(msg){
@@ -254,7 +254,7 @@ async function callGemini(msg){
   document.getElementById("free-row").className="";
   freeOpen=false;tappedOpt=null;
 
-  const ctx=`ãç©å®¶ãåå­:${playerName}|ä½ç½®:${position.key}|èæ¯:${background.key}|æ¥­å:${karma}ï¼å¿åç¥ç©å®¶ï¼\næ¸å¼:${Object.entries(stats).map(([k,v])=>k+":"+v).join(",")}\né«å:${stamina}/100`;
+  const ctx=`【玩家】名字:${playerName}|位置:${position.key}|背景:${background.key}|業力:${karma}（勿告知玩家）\n數值:${Object.entries(stats).map(([k,v])=>k+":"+v).join(",")}\n體力:${stamina}/100`;
   conversation.push({role:"user",parts:[{text:ctx+"\n\n"+msg}]});
 
   try{
@@ -263,33 +263,33 @@ async function callGemini(msg){
       body:JSON.stringify({system_instruction:{parts:[{text:SYSTEM_PROMPT}]},contents:conversation,generationConfig:{maxOutputTokens:1200,temperature:0.95}})
     });
     const d=await r.json();
-    if(d.error){showErr("APIé¯èª¤ï¼"+d.error.message+(d.error.message.includes("API_KEY")?" â è«ç¢ºèª Key æ¯å¦æ­£ç¢º":"")); return;}
-    const raw=d.candidates?.[0]?.content?.parts?.[0]?.text||"ï¼åæé¯èª¤ï¼";
+    if(d.error){showErr("API錯誤："+d.error.message+(d.error.message.includes("API_KEY")?" — 請確認 Key 是否正確":"")); return;}
+    const raw=d.candidates?.[0]?.content?.parts?.[0]?.text||"（回應錯誤）";
     conversation.push({role:"model",parts:[{text:raw}]});
     processResp(raw);
-  }catch(e){showErr("é£ç·é¯èª¤ï¼"+e.message);}
+  }catch(e){showErr("連線錯誤："+e.message);}
 }
 
 function processResp(raw){
   showLoad(false);
-  const sp={basketball:/ç±çæè¡[ï¼:]\s*(\d+)/,physical:/é«è½[ï¼:]\s*(\d+)/,mental:/å¿ç[ï¼:]\s*(\d+)/,
-    wealth:/è²¡å¯[ï¼:]\s*(\d+)/,romance:/ææ[ï¼:]\s*(\d+)/,family:/å®¶åº­[ï¼:]\s*(\d+)/,
-    fame:/åæ°£[ï¼:]\s*(\d+)/,happiness:/å¿«æ¨[ï¼:]\s*(\d+)/};
+  const sp={basketball:/籃球技術[：:]\s*(\d+)/,physical:/體能[：:]\s*(\d+)/,mental:/心理[：:]\s*(\d+)/,
+    wealth:/財富[：:]\s*(\d+)/,romance:/感情[：:]\s*(\d+)/,family:/家庭[：:]\s*(\d+)/,
+    fame:/名氣[：:]\s*(\d+)/,happiness:/快樂[：:]\s*(\d+)/};
   for(const[k,p]of Object.entries(sp)){const m=raw.match(p);if(m)stats[k]=Math.min(100,Math.max(0,+m[1]));}
-  const sm=raw.match(/é«å[ï¼:]\s*(\d+)/);if(sm)stamina=Math.min(100,Math.max(0,+sm[1]));
+  const sm=raw.match(/體力[：:]\s*(\d+)/);if(sm)stamina=Math.min(100,Math.max(0,+sm[1]));
   round++;
-  if(raw.includes("éä¼")&&raw.includes("ââââ"))triggerEnd();
+  if(raw.includes("退休")&&raw.includes("════"%)triggerEnd();
 
   const opts=[];
-  for(const blk of raw.split(/(?=ã[A-E]ã)/)){
-    const hm=blk.match(/^ã([A-E])ã\s*(.+?)(?:\n|$)/);if(!hm)continue;
+  for(const blk of raw.split(/(?=【[A-E]】)/)){
+    const hm=blk.match(/^c��([A-E])】\s*(.+?)(?:\n|$)/);if(!hm)continue;
     const dm=blk.match(/DELTA:\s*([^\n]+)/i);const deltas={};
     if(dm)for(const p of dm[1].split(",")){const x=p.trim().match(/(\w+):\s*([+-]?\d+)/);if(x)deltas[x[1]]=+x[2];}
     opts.push({key:hm[1],label:hm[2].trim(),deltas});
   }
 
-  const story=raw.replace(/ð[^\n]*\n?/,"").replace(/DELTA:[^\n]*/gi,"").replace(/ã[A-E]ã[^\n]*/g,"")
-    .replace(/ââââ[\s\S]*?é«å[ï¼:]\s*\d+[^\n]*/g,"").replace(/\n{3,}/g,"\n\n").trim();
+  const story=raw.replace(/📋[^\n]*\n?/,"").replace(/DELTA:[^\n]*/gi,"").replace(/【[A-E]】[^\n]*/g,"")
+    .replace(/════[\s\S]*?體力[：:]\s*\d+[^\n]*/g,"").replace(/\n{3,}/g,"\n\n").trim();
 
   const sb=document.getElementById("story-box");
   sb.textContent=story;sb.style.display="block";
@@ -301,7 +301,7 @@ function processResp(raw){
     d.className="opt-btn";d.id="opt-"+opt.key;
     d.innerHTML<`<div style="display:flex;align-items:flex-start;gap:9px">
       <span class="opt-key">${opt.key}</span><span style="flex:1">${opt.label}</span></div>
-      ${dp.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;padding-left:2px">${dp.map(([k,v])=>dtag(v,k==="stamina"?"â¡":(SMETA[k]?.l.split(" ")[0]||""))).join("")}</div>`:""}`;
+      ${dp.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;padding-left:2px">${dp.map(([k,v])=>dtag(v,k==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||""))).join("")}</div>`:""}`;
     d.onclick=()=>pickOpt(opt);
     ol.appendChild(d);
   }
@@ -314,58 +314,58 @@ function pickOpt(opt){
   if(tappedOpt)return;tappedOpt=opt.key;
   document.getElementById("opt-"+opt.key)?.classList.add("tapped");
   let kd=0;
-  if(/åç|è¥ç©|è³­å|å¤é|åè¿|è¸¢èµ°|æ¬ºé¨/.test(opt.label))kd=-12;
-  else if(/æå|å¹«å©|å¿ |éæ­|æ¯æ/.test(opt.label))kd=8;
+  if(/假球|藥物|賭博|外遇|劈腿|踢走|欺騙/.test(opt.label))kd=-12;
+  else if(/慈善|幫助|忠|道歉|支持/.test(opt.label))kd=8;
   karma=Math.min(100,Math.max(0,karma+kd));
   showFloat(opt.deltas);
   history.push({round,choice:`[${opt.key}] ${opt.label}`,deltas:opt.deltas});
-  callGemini(`æé¸æã${opt.key}ãï¼${opt.label}`);
+  callGemini(`我選擇【${opt.key}】：${opt.label}`);
 }
 
 function sendFree(){
   const inp=document.getElementById("free-input");const msg=inp.value.trim();if(!msg)return;
   inp.value="";document.getElementById("free-row").className="";freeOpen=false;
-  document.getElementById("free-toggle").textContent="âï¸ èªç±è¼¸å¥";
+  document.getElementById("free-toggle").textContent="✏️ 自由輸入";
   callGemini(msg);
 }
 
 function triggerEnd(){
   const b=stats.basketball||0,f=stats.fame||0,h=stats.happiness||0,fam=stats.family||0,w=stats.wealth||0;
-  let t="å°ç£çå¡",s="å®æäºå±¬æ¼ä½ çç±çæç¨ã";
-  if(b>88&&f>85&&karma>65){t="ð ç±çä¹ç¥";s="æè¡ãåæ°£ãåæ ¼ä¸èå¼åãå²æ¸çåã";}
-  else if(f>70&&karma>50&&history.length>12){t="ð¹ð¼ å°ç£ä¹å";s="å¾å°ç£åºç¼ï¼è®ä¸ççè¦ä½ ã";}
-  else if(f>55&&karma<25){t="ð¥ éèçæ";s="æè¯æ´æº¢ï¼å»éä¸éæ¥­ååæ²ã";}
-  else if(b>78&&f<35){t="ðï¸ è¢«éºå¿çå¤©æ";s="è½åå¾æªè¢«ä¸äººçæ­£çè¦ã";}
-  else if(h>78&&fam>75){t="ð å¿«æ¨èç¹";s="ç±çä¸æ¯å¨é¨ï¼ä½ æ¾å°äºçæ­£çå¹¸ç¦ã";}
-  else if(w<15){t="ð¸ ç ´ç¢å³å¥";s="é¢æ²äºï¼ä½æäºæµå³ã";}
-  else if(karma>70){t="ð çå ´åå­";s="æ¯ä¸æ­¥èµ°å¾å¦è©ï¼æ¥­åå¸¶ä¾åçµã";}
+  let t="台灣球員",s="完成了屬於你的籃球旅程。";
+  if(b>88&&f>85&&karma>65){t="🏆 籃球之神";s="技術、名氣、品格三者兼備。史書留名。";}
+  else if(f>70&&karma>50&&history.length>12){t="🇹🇼 台灣之光";s="從台灣出發，讓世界看見你。";}
+  else if(f>55&&karma<25){t="💥 醜聞球星";s="才華洋溢，卻逃不過業力反撲。";}
+  else if(b>78&&f<35){t="👁️ 被遺忘的天才";s="能力從未被世人真正看見。";}
+  else if(h>78&&fam>75){t="😊 快樂老爹";s="籃球不是全部，你找到了真正的幸福。";}
+  else if(w<15){t="💸 破產傳奇";s="錢沒了，但故事流傳。";}
+  else if(karma>70){t="🙏 球場君子";s="每一步走得坦蕩，業力帶來善終。";}
   document.getElementById("ach-title").textContent=t;
   document.getElementById("ach-sub").textContent=s;
-  document.getElementById("ach-karma").textContent="æ¥­åæ­æï¼"+(karma>65?"â¨ æ¸ç½ç£è½":karma>35?"âï¸ åéåå":"ð æ¥­åµçºèº«");
+  document.getElementById("ach-karma").textContent="業力揭曉："+(karma>65?"✨ 清白磊落":karma>35?"⚖️ 功過參半":"💀 業債纏身");
   document.getElementById("ach-modal").style.display="flex";
 }
 
 function dtag(v,icon){const p=v>0;return`<span class="delta-tag ${p?"dp":"dn"}">${icon||""}${p?"+"+v:v}</span>`;}
 function showLoad(on){document.getElementById("loading").style.display=on?"block":"none";}
-function showErr(m){showLoad(false);const sb=document.getElementById("story-box");sb.textContent="â ï¸ "+m;sb.style.display="block";}
+function showErr(m){showLoad(false);const sb=document.getElementById("story-box");sb.textContent="⚠️ "+m;sb.style.display="block";}
 function updateHeader(){
-  document.getElementById("header-sub").textContent=`${playerName} Â· ${position?.key||""} Â· åå#${round}`;
-  document.getElementById("karma-hint").textContent=karma>60?"âï¸":karma>30?"ð¥ï¸":"âï¸";
+  document.getElementById("header-sub").textContent=`${playerName} · ${position?.key||""} · 回合#${round}`;
+  document.getElementById("karma-hint").textContent=karma>60?"☀️":karma>30?"🌥️":"⛈️";
 }
 function renderStrip(){
   const sc=stamina,col=sc>60?"#4ade80":sc>30?"#fbbf24":"#f87171";
   document.getElementById("mini-strip").innerHTML=
-    `<div class="stat-pill"><span>â¡</span><span style="color:${col}">${sc}</span></div>`
+    `<div class="stat-pill"><span>⚡</span><span style="color:${col}">${sc}</span></div>`
     +Object.entries(SMETA).map(([k,m])=>`<div class="stat-pill"><span>${m.l.split(" ")[0]}</span><span style="color:${m.c}">${stats[k]||0}</span></div>`).join("");
 }
 function renderStatRows(){
   const sc=stamina,col=sc>60?"#4ade80":sc>30?"#fbbf24":"#f87171";
-  document.getElementById("stam-bar-wrap").innerHTML=`<div class="stam-wrap"><span class="stam-label">â¡ é«å</span><div class="stam-track"><div class="stam-fill" style="width:${sc}%;background:${col}"></div></div><span class="stat-val" style="color:${col}">${sc}/100</span></div>`;
+  document.getElementById("stam-bar-wrap").innerHTML=`<div class="stam-wrap"><span class="stam-label">⚡ 體力</span><div class="stam-track"><div class="stam-fill" style="width:${sc}%;background:${col}"></div></div><span class="stat-val" style="color:${col}">${sc}/100</span></div>`;
   document.getElementById("stat-rows").innerHTML=Object.entries(SMETA).map(([k,m])=>`<div class="stat-row"><span class="stat-label">${m.l}</span><div class="stat-track"><div class="stat-fill" style="width:${Math.min(100,Math.max(0,stats[k]||0))}%;background:${m.c}"></div></div><span class="stat-val" style="color:${m.c}">${stats[k]||0}</span></div>`).join("");
 }
 function renderHist(){
-  if(!history.length){document.getElementById("hist-list").innerHTML<`<span style="font-size:12px;color:#475569">å°ç¡è¨é</span>`;return;}
-  document.getElementById("hist-list").innerHTML=[...history].reverse().map(h=>`<div style="font-size:12px;color:#64748b;margin-bottom:9px;border-left:2px solid rgba(249,115,22,0.25);padding-left:9px"><div style="color:#94a3b8;margin-bottom:3px">#${h.round} ${h.choice}</div><div style="display:flex;gap:3px;flex-wrap:wrap">${Object.entries(h.deltas).map(([k,v])=>{const icon=k==="stamina"?"â¡":(SMETA[k]?.l.split(" ")[0]||"");return`<span style="font-size:9px;color:${v>0?"#4ade80":"#f87171"}">${icon}${v>0?"+"+v:v}</span>`;}).join("")}</div></div>`).join("");
+  if(!history.length){document.getElementById("hist-list").innerHTML<`<span style="font-size:12px;color:#475569">尚無記錄</span>`;return;}
+  document.getElementById("hist-list").innerHTML=[...history].reverse().map(h=>`<div style="font-size:12px;color:#64748b;margin-bottom:9px;border-left:2px solid rgba(249,115,22,0.25);padding-left:9px"><div style="color:#94a3b8;margin-bottom:3px">#${h.round} ${h.choice}</div><div style="display:flex;gap:3px;flex-wrap:wrap">${Object.entries(h.deltas).map(([k,v])=>{const icon=k==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||"");return`<span style="font-size:9px;color:${v>0?"#4ade80":"#f87171"}">${icon}${v>0?"+"+v:v}</span>`;}).join("")}</div></div>`).join("");
 }
 function toggleDrawer(w){
   if(w==="stats"){sOpen=!sOpen;hOpen=false;if(sOpen)renderStatRows();}
@@ -378,14 +378,14 @@ function toggleDrawer(w){
 function toggleFree(){
   freeOpen=!freeOpen;
   document.getElementById("free-row").className=freeOpen?"show":"";
-  document.getElementById("free-toggle").textContent=freeOpen?"â² æ¶èµ·":"âï¸ èªç±è¼¸å¥";
+  document.getElementById("free-toggle").textContent=freeOpen?"▲ 收起":"✏️ 自由輸入";
   if(freeOpen)setTimeout(()=>document.getElementById("free-input").focus(),50);
 }
 function showFloat(deltas){
   const fd=document.getElementById("floating-delta");
   fd.innerHTML=Object.entries(deltas).filter(([k])=>SMETA[k]||k==="stamina").map(([k,v])=>{
-    const icon=k==="stamina"?"â¡":(SMETA[k]?.l.split(" ")[0]||"");
-    const name=k==="stamina"?"é«å":(SMETA[k]?.l.split(" ").slice(1).join(" ")||k);
+    const icon=k==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||"");
+    const name=k==="stamina"?"體力":(SMETA[k]?.l.split(" ").slice(1).join(" ")||k);
     const col=v>0?"#4ade80":"#f87171";
     return`<div class="fdelta-item" style="border:1.5px solid ${col};color:${col}">${icon} ${name} ${v>0?"+"+v:v}</div>`;
   }).join("");
