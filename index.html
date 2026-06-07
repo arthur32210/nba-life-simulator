@@ -382,7 +382,7 @@ function startGame(){
   callGemini(`我的名字是「${playerName}」，位置${position.key}，背景${background.key}，個性${trait.key}。從台灣童年第一次接觸籃球開始，嚴格遵守格式輸出。`);
 }
 
-const GEMINI_MODELS=["gemini-2.5-flash","gemini-2.0-flash","gemini-1.5-flash"];
+const GEMINI_MODELS=["gemini-2.5-flash","gemini-2.0-flash","gemini-2.0-flash-lite"];
 async function callGemini(msg){
   showLoad(true);
   document.getElementById("story-box").style.display="none";
@@ -418,7 +418,7 @@ async function callGemini(msg){
     }
     if(!_r.ok||_d.error){
       const _em=_d.error?_d.error.message:_r.statusText||"未知錯誤";
-      const _retry=_r.status===503||_r.status===429||_r.status===500||_r.status===502||_r.status===504;
+      const _retry=[404,429,500,502,503,504].includes(_r.status);
       if(_retry&&_mi<GEMINI_MODELS.length-1){_lastErr="API錯誤（"+_model+" / HTTP "+_r.status+"）："+_em;continue;}
       showErr("API錯誤（"+_model+" / HTTP "+_r.status+"）："+_em);return;
     }
@@ -430,7 +430,7 @@ async function callGemini(msg){
     }
     _raw=raw;break;
   }
-  if(!_raw){showErr("Gemini暫時忙糌，請稍後再試。最後錯誤："+_lastErr);return;}
+  if(!_raw){showErr("Gemini 目前忙碌或此 Key 不支援可用模型，請稍後再試，或換一把 Google AI Studio API Key。");return;}
   conversation.push({role:"model",parts:[{text:_raw}]});
   conversation=conversation.slice(-12);
   processResp(_raw);
