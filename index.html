@@ -382,6 +382,7 @@ function startGame(){
   callGemini(`我的名字是「${playerName}」，位置${position.key}，背景${background.key}，個性${trait.key}。從台灣童年第一次接觸籃球開始，嚴格遵守格式輸出。`);
 }
 
+const GEMINI_MODELS=["gemini-2.5-flash","gemini-2.0-flash","gemini-1.5-flash"];
 async function callGemini(msg){
   showLoad(true);
   document.getElementById("story-box").style.display="none";
@@ -401,28 +402,38 @@ async function callGemini(msg){
 最近新聞:${headlines.slice(0,5).join("/")||"無"}`
   conversation.push({role:"user",parts:[{text:ctx+"\n\n"+msg}]});
 
-  try{
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,{
-      method:"POST",headers:getGeminiHeaders(),
-      body:JSON.stringify({system_instruction:{parts:[{text:SYSTEM_PROMPT}]},contents:conversation,generationConfig:{maxOutputTokens:1400,temperature:0.95}})
-    });
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok||d.error){
-      const em=d.error?d.error.message:r.statusText||"未知錯誤";
-      showErr(`API錯誤（HTTP ${r.status}）:${em}`);
-      return;
+  let _lastErr="";let _raw="";
+  for(let _mi=0;_mi<GEMINI_MODELS.length;_mi++){
+    const _model=GEMINI_MODELS[_mi];
+    let _r,_d;
+    try{
+      _r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+_model+":generateContent",{
+        method:"POST",headers:getGeminiHeaders(),
+        body:JSON.stringify({system_instruction:{parts:[{text:SYSTEM_PROMPT}]},contents:conversation,generationConfig:{maxOutputTokens:1400,temperature:0.95}})
+      });
+      _d=await _r.json().catch(()=>({}));
+    }catch(e){
+      if(_mi<GEMINI_MODELS.length-1){_lastErr="連線錯誤（"+_model+"）："+(e&&e.message?e.message:String(e));continue;}
+      showErr("連線錯誤："+(e&&e.message?e.message:String(e)));return;
     }
-    const cand=d.candidates&&d.candidates[0];
+    if(!_r.ok||_d.error){
+      const _em=_d.error?_d.error.message:_r.statusText||"未知錯誤";
+      const _retry=_r.status===503||_r.status===429||_r.status===500||_r.status===502||_r.status===504;
+      if(_retry&&_mi<GEMINI_MODELS.length-1){_lastErr="API錯誤（"+_model+" / HTTP "+_r.status+"）："+_em;continue;}
+      showErr("API錯誤（"+_model+" / HTTP "+_r.status+"）："+_em);return;
+    }
+    const cand=_d.candidates&&_d.candidates[0];
     const raw=cand&&cand.content&&cand.content.parts?cand.content.parts.map(p=>p.text||"").join("\n").trim():"";
     if(!raw){
-      const reason=(d.promptFeedback&&d.promptFeedback.blockReason)||(cand&&cand.finishReason)||(d.error&&d.error.message)||"Gemini沒有回傳文字，可能被安全規則阻擋";
-      showErr("API回應無文字："+reason);
-      return;
+      const reason=(_d.promptFeedback&&_d.promptFeedback.blockReason)||(cand&&cand.finishReason)||(_d.error&&_d.error.message)||"沒有回傳文字，可能被安全規則阻擋";
+      showErr("API回應無文字："+reason);return;
     }
-    conversation.push({role:"model",parts:[{text:raw}]});
+    _raw=raw;break;
+  }
+  if(!_raw){showErr("Gemini暫時忙糌，請稍後再試。最後錯誤："+_lastErr);return;}
+  conversation.push({role:"model",parts:[{text:_raw}]});
   conversation=conversation.slice(-12);
-    processResp(raw);
-  }catch(e){showErr("連線錯誤："+(e&&e.message?e.message:String(e)));}
+  processResp(_raw);
 }
 
 function processResp(raw){
