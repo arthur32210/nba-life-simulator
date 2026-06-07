@@ -299,7 +299,7 @@ function processResp(raw){
   const opts=[];
   for(const blk of raw.split(/(?=【[A-E]】)/)){
     const hm=blk.match(/【([A-E])】\s*(.+?)(?:\n|$)/);if(!hm)continue;
-    const dm=blk.match(/DELTA:\s*([^\n]+)/i/i);const deltas={};
+    const dm=blk.match(/DELTA:\s*([^\n]+)/i);const deltas={};
     if(dm)for(const p of dm[1].split(",")){const x=p.trim().match(/(\w+):\s*([+-]?\d+)/);if(x)deltas[x[1]]=+x[2];}
     opts.push({key:hm[1],label:hm[2].trim(),deltas});
   }
