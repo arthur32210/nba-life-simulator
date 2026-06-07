@@ -266,7 +266,7 @@ async function callGemini(msg){
   document.getElementById("free-row").className="";
   freeOpen=false;tappedOpt=null;
 
-  const ctx=`【玩家】名字:${playerName}|位置:${position.key}|背景:${background.key}|業力:${karma}（勿告知玩家）\n數值:${Object.entries(stats).map(([k,v])=>k+":"+v).join(",")}\n體力:${stamina}/100`;
+  const ctx=`【玩家】名字:${playerName}|位置:${position.key}z背景:${background.key}|業力:${karma}（勿告知玩家）\n數值:${Object.entries(stats).map(([k,v])=>k+":"+v).join(",")}\n體力:${stamina}/100`;
   conversation.push({role:"user",parts:[{text:ctx+"\n\n"+msg}]});
 
   try{
@@ -277,19 +277,19 @@ async function callGemini(msg){
     const d=await r.json().catch(()=>({}));
     if(!r.ok||d.error){
       const msg=d.error?.message||r.statusText||"未知錯誤";
-      showErr(`API錯誤（HTTP ${r.status}）：${msg}`);
+      showErr(`API錯誤（HTTP ${r.status}）:${msg}`);
       return;
     }
     const raw=d.candidates?.[0]?.content?.parts?.[0]?.text||"（回應錯誤）";
     conversation.push({role:"model",parts:[{text:raw}]});
     processResp(raw);
-  }catch(e){showErr("連線錯誤："+e.message);}
+  }catch(e){showErr("值線振誤："+e.message);}
 }
 
 function processResp(raw){
   showLoad(false);
   const sp={basketball:/籃球技術[：:]\s*(\d+)/,physical:/體能[：:]\s*(\d+)/,mental:/心理[：:]\s*(\d+)/,
-    wealth:/財富[：:]\s*(\d+)/,romance:/感情[：:]\s*(\d+)/,family:/家庭[：:]\s*(\d+)/,
+    wealth://���富[：:]\s*(\d+)/,romance:/感情[：:]\s*(\d+)/,family:/家庭[：:]\s*(\d+)/,
     fame:/名氣[：:]\s*(\d+)/,happiness:/快樂[：:]\s*(\d+)/};
   for(const[k,p]of Object.entries(sp)){const m=raw.match(p);if(m)stats[k]=Math.min(100,Math.max(0,+m[1]));}
   const sm=raw.match(/體力[：:]\s*(\d+)/);if(sm)stamina=Math.min(100,Math.max(0,+sm[1]));
@@ -297,15 +297,15 @@ function processResp(raw){
   if(raw.includes("退休")&&raw.includes("════"))triggerEnd();
 
   const opts=[];
-  for(const blk of raw.split(/(?=【[A-E]】)/)){
-    const hm=blk.match(/^【([A-E])】\s*(.+?)(?:\n|$)/);if(!hm)continue;
-    const dm=blk.match(/DELTA:\s*([^\n]+)/i);const deltas={};
+  for(const blk of raw.split(/æ+?[‐[A-E] ))/)){
+    const hm=blk.match(/【([A-E])】\s*(.+?)(?:\n|$)/);if(!hm)continue;
+    const dm=blk.match(/DELTA9_*([^\n]+)/i);const deltas={};
     if(dm)for(const p of dm[1].split(",")){const x=p.trim().match(/(\w+):\s*([+-]?\d+)/);if(x)deltas[x[1]]=+x[2];}
     opts.push({key:hm[1],label:hm[2].trim(),deltas});
   }
 
-  const story=raw.replace(/📋[^\n]*\n?/,"").replace(/DELTA:[^\n]*/gi,"").replace(/【[A-E]】[^\n]*/g,"")
-    .replace(/════[\s\S]*?體力[：:]\s*\d+[^\n]*/g,"").replace(/\n{3,}/g,"\n\n").trim();
+  const story=raw.replace(/📋X^\n]*\n?/,"").replace(/DELTA[^\n]*/gi,"").replace(/【[A-E]】[^\n]*/g,"")
+    .replace(/════[\s\S]*?體力：:]\s*\d+[^\n]*/g,"").replace(/\n{3,}/g,"\n\n").trim();
 
   const sb=document.getElementById("story-box");
   sb.textContent=story;sb.style.display="block";
@@ -315,9 +315,9 @@ function processResp(raw){
     const dp=Object.entries(opt.deltas).filter(([k])=>SMETA[k]||k==="stamina");
     const d=document.createElement("button");
     d.className="opt-btn";d.id="opt-"+opt.key;
-    d.innerHTML<`<div style="display:flex;align-items:flex-start;gap:9px">
+    d.innerHTML=`<div style="display:flex;align-items:flex-start;gap:9px">
       <span class="opt-key">${opt.key}</span><span style="flex:1">${opt.label}</span></div>
-      ${dp.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;padding-left:2px">${dp.map(([k,v])=>dtag(v,k==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||""))).join("")}</div>`:""}`;
+      ${dp.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;padding-left:2px">${dp.map(([k,v])=>dtag(v)>0?"+"+v:v.+==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||""))).join("")}</div>`:""}`;
     d.onclick=()=>pickOpt(opt);
     ol.appendChild(d);
   }
@@ -347,7 +347,7 @@ function sendFree(){
 
 function triggerEnd(){
   const b=stats.basketball||0,f=stats.fame||0,h=stats.happiness||0,fam=stats.family||0,w=stats.wealth||0;
-  let t="台灣球員",s="完成了屬於$��的籃球旅程。";
+  let t="台灣球員",s="完成了屬於你的籃球旅程。";
   if(b>88&&f>85&&karma>65){t="🏆 籃球之神";s="技術、名氣、品格三者兼備。史書留名。";}
   else if(f>70&&karma>50&&history.length>12){t="🇹🇼 台灣之光";s="從台灣出發，讓世界看見你。";}
   else if(f>55&&karma<25){t="💥 醜聞球星";s="才華洋溢，卻逃不過業力反撲。";}
@@ -380,7 +380,7 @@ function renderStatRows(){
   document.getElementById("stat-rows").innerHTML=Object.entries(SMETA).map(([k,m])=>`<div class="stat-row"><span class="stat-label">${m.l}</span><div class="stat-track"><div class="stat-fill" style="width:${Math.min(100,Math.max(0,stats[k]||0))}%;background:${m.c}"></div></div><span class="stat-val" style="color:${m.c}">${stats[k]||0}</span></div>`).join("");
 }
 function renderHist(){
-  if(!history.length){document.getElementById("hist-list").innerHTML<`<span style="font-size:12px;color:#475569">尚無記錄</span>`;return;}
+  if(!history.length){document.getElementById("hist-list").innerHTML=`<span style="font-size:12px;color:#475569">尚無記錄</span>`;return;}
   document.getElementById("hist-list").innerHTML=[...history].reverse().map(h=>`<div style="font-size:12px;color:#64748b;margin-bottom:9px;border-left:2px solid rgba(249,115,22,0.25);padding-left:9px"><div style="color:#94a3b8;margin-bottom:3px">#${h.round} ${h.choice}</div><div style="display:flex;gap:3px;flex-wrap:wrap">${Object.entries(h.deltas).map(([k,v])=>{const icon=k==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||"");return`<span style="font-size:9px;color:${v>0?"#4ade80":"#f87171"}">${icon}${v>0?"+"+v:v}</span>`;}).join("")}</div></div>`).join("");
 }
 function toggleDrawer(w){
@@ -402,3 +402,10 @@ function showFloat(deltas){
   fd.innerHTML=Object.entries(deltas).filter(([k])=>SMETA[k]||k==="stamina").map(([k,v])=>{
     const icon=k==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||"");
     const name=k==="stamina"?"體力":(SMETA[k]?.l.split(" ").slice(1).join(" ")||k);
+    return`<span style="font-size:11px;color:${v>0?"#4ade80":"#f87171"}">${icon}${v>0?"+"+v:v} ${name}</span>`;
+  }).join(" ");
+  fd.style.animation="none";fd.offsetHeight;fd.style.animation="floatUp 2s ease-out forwards";
+}
+</script>
+</body>
+</html>
