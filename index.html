@@ -94,7 +94,7 @@ button{-webkit-tap-highlight-color:transparent;cursor:pointer;}
     <div id="apikey-screen" style="display:flex;flex-direction:column;align-items:center;padding:40px 0;text-align:center">
       <div style="font-size:48px;margin-bottom:12px">🏀</div>
       <h1 style="font-size:22px;font-weight:900;margin-bottom:8px" class="grad-text">NBA 人生模擬器</h1>
-      <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:16px">Gemini 獨立版 · 脫離 Claude 單獨使用<br/><span style="color:#f97316">⚠️ 含R18成人內容</span></p>
+      <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:16px">Gemini 獨立版 · 脫離 Claude 單獨使用</p>
       <div style="font-size:12px;color:#64748b;line-height:1.9;margin-bottom:20px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:10px;padding:14px 16px;width:100%">
         取得免費 Gemini API Key：<br/>
         <a class="api-link" href="https://aistudio.google.com/apikey" target="_blank">👉 aistudio.google.com/apikey</a><br/>
@@ -166,7 +166,7 @@ DELTA可用欄位：basketball,physical,mental,wealth,romance,family,fame,happin
 壓力:[值]|傷病風險:[值]|媒體風評:[值]
 教練信任:[值]|隊友情誼:[值]|球迷支持:[值]
 家人關係:[值]|感情關係:[值]|經紀人能力:[值]
-台灣籃球文化真實（HBL/SBL/UBA/瓊斯盃），NBA真實名稱可用，R18暗示不露骨
+台灣籃球文化真實（HBL/SBL/UBA/瓊斯盃），NBA真實名稱可用，感情與人生事件請保持成人向但不露骨；未成年階段不得出現性暗示或成人情節。
 round 191-199是退休倒數階段，每回合必須圍繞以下主題之一：最後一季、老隊友告別、家人回顧、球迷致敬、名人堂討論、財務與品牌、是否轉任教練、最後一次季後賽、退休記者會前夕。仍然提供A-E選項，但選項偶向人生收尾、傳承、家庭、媒體、財務與自我和解，勿再做菜鳥訓練升級類事件。
 老化規則：round>=140後球員進入老化期，體能、體力、傷病風險逐步惡化。你不得無理由把老將的體能或體力大幅拉回滿值。round>=170後除非選項明確是休養復健輪休，否則體力不得高於85。round>=190後體力不得高於75，體能不得高於85，傷病風險不得低於40。這些限制優先於一般爽感成長。`;
 
@@ -402,11 +402,17 @@ async function callGemini(msg){
       showErr(`API錯誤（HTTP ${r.status}）:${em}`);
       return;
     }
-    const raw=d.candidates&&d.candidates[0]?d.candidates[0].content.parts[0].text:"（回應錯誤）";
+    const cand=d.candidates&&d.candidates[0];
+    const raw=cand&&cand.content&&cand.content.parts?cand.content.parts.map(p=>p.text||"").join("\n").trim():"";
+    if(!raw){
+      const reason=(d.promptFeedback&&d.promptFeedback.blockReason)||(cand&&cand.finishReason)||(d.error&&d.error.message)||"Gemini沒有回傳文字，可能被安全規則阻擋";
+      showErr("API回應無文字："+reason);
+      return;
+    }
     conversation.push({role:"model",parts:[{text:raw}]});
   conversation=conversation.slice(-12);
     processResp(raw);
-  }catch(e){showErr("連線錯誤："+e.message);}
+  }catch(e){showErr("連線錯誤："+(e&&e.message?e.message:String(e)));}
 }
 
 function processResp(raw){
