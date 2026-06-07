@@ -138,6 +138,10 @@ button{-webkit-tap-highlight-color:transparent;cursor:pointer;}
 <script>
 const SYSTEM_PROMPT=`你是一個NBA籃球生涯模擬遊戲的GM。
 每次訊息含玩家完整資料。
+人生節奏固定以 200 回合為上限。
+你必須依照「目前階段」推進劇情，不可長期停留在童年、HBL 或 NBA 初期。
+round 191-200 必須進入退休、傳承、家庭、名人堂、財務、媒體回顧等結算劇情。
+round >= 200 必須輸出退休結局，不再提供普通生涯延伸劇情。
 人生階段：童年→國小→國中→HBL高中→UBA大學→職業初期→巔峰→末期→退休
 位置：PG智力型/SG爆發型/SF均衡/PF力量型/C禁區型
 個性：killer冷血殺手/team團隊至上/grind訓練狂/social社交王/fragile玻璃心/nightlife夜店咖
@@ -212,17 +216,17 @@ const RELMETA={
 };
 
 const MILESTONE_DEF=[
-  {id:"child",   label:"🏁 童年初登場",  desc:"你第一次踏上籃球場，開始了這段旅程。",         minRound:1},
-  {id:"junior",  label:"🏁 國中校隊",    desc:"你入選了學校籃球隊，展開正式訓練。",           minRound:2},
-  {id:"hbl",     label:"🏁 HBL關鍵戰",  desc:"你在全國轉播下迎來生涯第一場壓力測試。",       minRound:4},
-  {id:"uba",     label:"🏁 UBA招募",    desc:"大學球探開始關注你，生涯進入新篇章。",         minRound:6},
-  {id:"jones",   label:"🏁 瓊斯盃",     desc:"代表國家參加國際賽事，見識世界頂尖舞台。",     minRound:8},
-  {id:"combine", label:"🏁 NBA Combine",desc:"你踏上NBA選前體能測試的舞台，每一秒都是考驗。",minRound:10},
-  {id:"draft",   label:"🏁 選秀夜",     desc:"人生最重要的夜晚，命運即將揭曉。",             minRound:11},
-  {id:"rookie",  label:"🏁 菜鳥年",     desc:"正式踏入職業籃球的殿堂，一切徝零開始。",       minRound:12},
-  {id:"playoff", label:"🏁 第一次季後賽",desc:"你第一次在季後賽的舞台上戰鬥，感受到真正的壓力。",minRound:15},
-  {id:"finals",  label:"🏁 總冠軍賽",   desc:"最高殿堂，所有球員一生的夢想就在眼前。",       minRound:18},
-  {id:"retire",  label:"🏁 退休演說",   desc:"感謝所有人，球鞋掛起，旅程圓滿。",             minRound:22},
+  {id:"童年初登場",label:"🏀 童年初登場",cond:r=>r.round>=1,minRound:1},
+  {id:"國中校隊",label:"🏫 國中校隊入選",cond:r=>r.round>=6,minRound:6},
+  {id:"HBL關鍵戰",label:"🏆 HBL關鍵戰",cond:r=>r.round>=16&&r.stats.basketball>=30,minRound:16},
+  {id:"UBA招募",label:"🎓 UBA招募",cond:r=>r.round>=31,minRound:31},
+  {id:"瓊斯盃",label:"🌏 瓊斯盃",cond:r=>r.round>=46&&r.stats.basketball>=50,minRound:46},
+  {id:"NBA Draft Combine",label:"🔍 NBA Draft Combine",cond:r=>r.round>=55,minRound:55},
+  {id:"選秀夜",label:"🌟 選秀夜",cond:r=>r.round>=60,minRound:60},
+  {id:"菜鳥年",label:"🏀 NBA菜鳥年",cond:r=>r.round>=70&&r.stats.basketball>=55,minRound:70},
+  {id:"第一次季後賽",label:"🏆 第一次季後賽",cond:r=>r.round>=130&&r.stats.basketball>=70,minRound:130},
+  {id:"總冠軍賽",label:"🥇 總冠軍賽",cond:r=>r.round>=160&&r.stats.basketball>=80,minRound:160},
+  {id:"退休演說",label:"🎤 退休演說",cond:r=>r.round>=190,minRound:190},
 ];
 
 const ACH_DEF=[
@@ -248,6 +252,8 @@ let stats={},stamina=100,karma=50,round=0;
 let stress=20,injuryRisk=5,media=50;
 let relations={coach:50,teammates:50,fans:50,familyRel:50,partner:30,agent:40};
 let history=[],conversation=[];
+function getCurrentStage(){if(round<=5)return"童年";if(round<=15)return"國中";if(round<=30)return"HBL";if(round<=45)return"UBA / 海外訓練";if(round<=60)return"選秀與職業入口";if(round<=90)return"菜鳥年與輪替球員";if(round<=125)return"主力成長期";if(round<=155)return"巅峰期";if(round<=175)return"季後賽 / 總冠軍窗口";if(round<=190)return"生涯末期";return"退休與人生結算";}
+function shouldForceRetire(){if(round>=200)return true;if(round>=160&&injuryRisk>85&&stress>80)return true;if(round>=170&&media<20&&karma<25)return true;if(round>=180&&stats.happiness<20&&stress>85)return true;return false;}
 let milestones=[],headlines=[],achievements=[];
 let setupStep=0,selPos=null,selBg=null,selTrait=null,nameVal="";
 let tappedOpt=null,freeOpen=false,sOpen=false,hOpen=false;
@@ -360,12 +366,15 @@ async function callGemini(msg){
   document.getElementById("free-row").className="";
   freeOpen=false;tappedOpt=null;
 
-  const ctx=`【玩家】名字:${playerName}|位置:${position.key}|背景:${background.key}|個性:${trait?trait.key:""}|業力:${karma}（勿告知玩家）
-數值:${Object.entries(stats).map(([k,v])=>k+":"+v).join(",")}
-體力:${stamina}/100
-壓力:${stress}/100|傷病風險:${injuryRisk}/100|媒體風評:${media}/100
-關係:教練信任${relations.coach}|隊友情誼${relations.teammates}|球迷支持${relations.fans}|家人關係${relations.familyRel}|感情關係${relations.partner}|經紀人能力${relations.agent}
-已達成里程碑:${milestones.length?milestones.join(","):"無"}`;
+  const ctx="【玩家】名字:"+playerName+"|位置:"+position.key+"|背景:"+background.key+"|個性:"+(trait?trait.key:"")+"|業力:"+karma+"（勿告知玩家）
+目前階段:"+getCurrentStage()+"|目前回合:"+round+"/200
+數值:"+Object.entries(stats).map(([k,v])=>k+":"+v).join(",")+"
+體力:"+stamina+"/100
+壓力:"+stress+"/100|傷病風險:"+injuryRisk+"/100|媒體風評:"+media+"/100
+關係:教練信任"+relations.coach+"|隊友情誼"+relations.teammates+"|球迷支持"+relations.fans+"|家人關係"+relations.familyRel+"|感情關係"+relations.partner+"|經紀人能力"+relations.agent+"
+已達成里程碑:"+(milestones.length?milestones.join(","):"無")+"
+已解鎖成就:"+(achievements.length?achievements.join(","):"無")+"
+最近新聞:"+(headlines.slice(0,5).join("/")||"無")
   conversation.push({role:"user",parts:[{text:ctx+"\n\n"+msg}]});
 
   try{
@@ -381,6 +390,7 @@ async function callGemini(msg){
     }
     const raw=d.candidates&&d.candidates[0]?d.candidates[0].content.parts[0].text:"（回應錯誤）";
     conversation.push({role:"model",parts:[{text:raw}]});
+  conversation=conversation.slice(-12);
     processResp(raw);
   }catch(e){showErr("連線錯誤："+e.message);}
 }
@@ -420,7 +430,7 @@ function processResp(raw){
   checkMilestones();
   checkAchievements();
 
-  if(raw.includes("退休")&&raw.includes("════"))triggerEnd();
+  if((raw.includes("退休")&&raw.includes("════"))||shouldForceRetire()){triggerEnd();const ol=document.getElementById("options-list");ol.innerHTML="";const rb=document.createElement("button");rb.className="primary-btn";rb.style.marginTop="16px";rb.textContent="🔄 重新開始";rb.onclick=function(){location.reload();};ol.appendChild(rb);document.getElementById("free-toggle").style.display="none";updateHeader();renderStrip();renderStatRows();renderHist();document.getElementById("bottom-anchor").scrollIntoView({behavior:"smooth"});return;}
 
   const opts=[];
   for(const blk of raw.split(/(?=【[A-E]】)/)){
@@ -522,9 +532,10 @@ function dtag(v,icon){const p=v>0;return`<span class="delta-tag ${p?"dp":"dn"}">
 function showLoad(on){document.getElementById("loading").style.display=on?"block":"none";}
 function showErr(m){showLoad(false);const sb=document.getElementById("story-box");sb.textContent="⚠️ "+m;sb.style.display="block";}
 function updateHeader(){
-  document.getElementById("header-sub").textContent=`${playerName} · ${position?position.key:""} · 回合#${round}`;
+  document.getElementById("header-sub").textContent=playerName?(playerName+" · "+(position?position.key:"")+" · "+getCurrentStage()+" · 回合#"+round+"/200"):"Gemini 獨立版";
   document.getElementById("karma-hint").textContent=karma>60?"☀️":karma>30?"🌥️":"⛈️";
 }
+
 
 function renderStrip(){
   const sc=stamina,col=sc>60?"#4ade80":sc>30?"#fbbf24":"#f87171";
