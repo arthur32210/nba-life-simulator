@@ -69,6 +69,7 @@ button{-webkit-tap-highlight-color:transparent;cursor:pointer;}
 #ach-modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.88);display:none;align-items:center;justify-content:center;padding:24px;}
 .ach-box{background:#0f172a;border:2px solid #fbbf24;border-radius:20px;padding:30px 20px;max-width:360px;width:100%;text-align:center;}
 .sect-divider{font-size:11px;color:#475569;margin:10px 0 6px;text-align:center;letter-spacing:1px;}
+#headline-bar{display:none;margin-bottom:8px;padding:6px 10px;background:rgba(56,189,248,0.07);border:1px solid rgba(56,189,248,0.18);border-radius:8px;font-size:11px;color:#7dd3fc;line-height:1.5;}
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes floatUp{0%{opacity:0;transform:translateY(22px) scale(0.85);}18%{opacity:1;transform:translateY(0) scale(1.07);}65%{opacity:1;transform:translateY(-9px) scale(1);}100%{opacity:0;transform:translateY(-46px) scale(0.9);}}
 </style>
@@ -79,7 +80,7 @@ button{-webkit-tap-highlight-color:transparent;cursor:pointer;}
     <span style="font-size:22px">🏀</span>
     <div style="flex:1;min-width:0">
       <div id="header-title" class="grad-text">NBA DREAM LIFE</div>
-      <div id="header-sub">Gemini 独立版</div>
+      <div id="header-sub">Gemini 獨立版</div>
     </div>
     <div id="header-btns" style="display:none">
       <span id="karma-hint" style="font-size:10px">☀️</span>
@@ -111,6 +112,7 @@ button{-webkit-tap-highlight-color:transparent;cursor:pointer;}
     <div id="game-screen" style="display:none">
       <div id="mini-strip" style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap"></div>
       <div id="loading"><div class="ball">🏀</div><p>Gemini 生成中...</p></div>
+      <div id="headline-bar"></div>
       <div id="story-box" class="story-box" style="display:none"></div>
       <div id="options-list"></div>
       <button id="free-toggle" onclick="toggleFree()">✏️ 自由輸入</button>
@@ -145,16 +147,15 @@ const SYSTEM_PROMPT=`你是一個NBA籃球生涯模擬遊戲的GM。
 傷病規則：傷病風險超過75時提高受傷、輪休、帶傷上陣事件
 媒體規則：媒體風評低於30時提高醜聞、酸民、球團壓力事件
 關係規則：每次事件選項至少影響1個關係值；關係低於20觸發衝突事件；關係高於85給予特殊機會
+里程碑規則：每隔2~3回合推進一個重要生涯里程碑，不要永遠停在童年。遇到里程碑時，事件要更有張力，像人生大轉折。
 格式（每次必須完整輸出）：
-1) 📋[名字]|[階段]|[位置]|體力:[值]/100
-2) 事件敘述120-200字繁體中文
-3) 五選項：
-【A】選項文字
-DELTA: basketball:+5, stamina:-10, coach:+3
-(B到E同格式)
-DELTA規則：每項影響2~4數值+stamina，能力值±1~20，stamina -5~-25
+1) 📋[名字]|[階段]|[位置]|體力:[值]|心理:[值]|財富:[值]
+感情:[值]|家庭:[值]|名氣:[值]|快樂:[值]|體力:[值]/100
+壓力:[值]|傷病風險:[值]|媒體風評:[值]
+教練信任:[值]|隊友情誼:[值]|球迷支持:[值]
+家人關係:[值]|感情關係:[值]|經紀人能力:[�：每項影響2~4數值+stamina，能力值±1~20，stamina -5~-25
 DELTA可用欄位：basketball,physical,mental,wealth,romance,family,fame,happiness,stamina,stress,injuryRisk,media,coach,teammates,fans,familyRel,partner,agent
-4) ════ 📊狀態 ════
+5) ════ 📊狀態 ════
 籃球技術:[值]|體能:[值]|心理:[值]|財富:[值]
 感情:[值]|家庭:[值]|名氣:[值]|快樂:[值]|體力:[值]/100
 壓力:[值]|傷病風險:[值]|媒體風評:[值]
@@ -186,7 +187,7 @@ const TRAITS=[
   {key:"social",label:"🎉 社交王",desc:"名氣、感情、球迷支持高，但訓練專注較低",
    mods:{fame:10,romance:8,fans:8,basketball:-3}},
   {key:"fragile",label:"😢 玻璃心",desc:"心理起伏大，壓力容易升高，但故事事件更戲劇化",
-   mods:{happiness:5,stress:15,mental:-5}},
+   mods:{happiness;5,stress:15,mental:-5}},
   {key:"nightlife",label:"🍾 夜店咖",desc:"名氣與感情事件多，但業力、教練信任、媒體風評風險高",
    mods:{fame:8,romance:10,karma:-10,coach:-10,media:-10}},
 ];
@@ -210,11 +211,44 @@ const RELMETA={
   agent:{l:"💼 經紀人能力",c:"#fbbf24"},
 };
 
+const MILESTONE_DEF=[
+  {id:"child",   label:"🏁 童年初登場",  desc:"你第一次踏上籃球場，開始了這段旅程。",         minRound:1},
+  {id:"junior",  label:"🏁 國中校隊",    desc:"你入選了學校籃球隊，展開正式訓練。",           minRound:2},
+  {id:"hbl",     label:"🏁 HBL關鍵戰",  desc:"你在全國轉播下迎來生涯第一場壓力測試。",       minRound:4},
+  {id:"uba",     label:"🏁 UBA招募",    desc:"大學球探開始關注你，生涯進入新篇章。",         minRound:6},
+  {id:"jones",   label:"🏁 瓊斯盃",     desc:"代表國家參加國際賽事，見識世界頂尖舞台。",     minRound:8},
+  {id:"combine", label:"🏁 NBA Combine",desc:"你踏上NBA選前體能測試的舞台，每一秒都是考驗。",minRound:10},
+  {id:"draft",   label:"🏁 選秀夜",     desc:"人生最重要的夜晚，命運即將揭曉。",             minRound:11},
+  {id:"rookie",  label:"🏁 菜鳥年",     desc:"正式踏入職業籃球的殿堂，一切徝零開始。",       minRound:12},
+  {id:"playoff", label:"🏁 第一次季後賽",desc:"你第一次在季後賽的舞台上戰鬥，感受到真正的壓力。",minRound:15},
+  {id:"finals",  label:"🏁 總冠軍賽",   desc:"最高殿堂，所有球員一生的夢想就在眼前。",       minRound:18},
+  {id:"retire",  label:"🏁 退休演說",   desc:"感謝所有人，球鞋掛起，旅程圓滿。",             minRound:22},
+];
+
+const ACH_DEF=[
+  {id:"popstar",   label:"人氣王",      icon:"👑", check:()=>stats.fame>70},
+  {id:"clutch",    label:"關鍵先生",    icon:"🎯", check:()=>stats.basketball>80},
+  {id:"glass",     label:"玻璃王牌",    icon:"💎", check:()=>injuryRisk>80},
+  {id:"mediaking", label:"媒體寵兒",    icon:"📺", check:()=>media>75},
+  {id:"toxic",     label:"球隊毒瘤",    icon:"💀", check:()=>relations.teammates<20||karma<20},
+  {id:"nightking", label:"夜店之王",    icon:"🍾", check:()=>trait&&trait.key==="nightlife"&&stats.fame>50},
+  {id:"family",    label:"家庭支柱",    icon:"🏠", check:()=>relations.familyRel>80},
+  {id:"grinder",   label:"訓練狂魔",    icon:"💪", check:()=>stress>85&&stats.basketball>75},
+  {id:"twlight",   label:"台灣之光",    icon:"🇹🇼", check:()=>round>8&&stats.fame>60},
+  {id:"bankrupt",  label:"破產傳奇",    icon:"💸", check:()=>stats.wealth<10&&round>6},
+  {id:"comeback",  label:"浪子回頭",    icon:"🙏", check:()=>karma<30&&stress>70&&stats.happiness>55},
+  {id:"champ",     label:"總冠軍老將",  icon:"🏆", check:()=>milestones.includes("finals")&&stats.basketball>75},
+  {id:"hblhero",   label:"HBL英雄",    icon:"🔥", check:()=>milestones.includes("hbl")&&stats.basketball>50},
+  {id:"undraft",   label:"選秀黑馬",    icon:"⚡", check:()=>milestones.includes("draft")&&background&&background.key==="poor"},
+  {id:"fallen",    label:"落選傳奇",    icon:"😤", check:()=>round>10&&stats.fame<20&&stats.basketball>70},
+];
+
 let apiKey="",playerName="",position=null,background=null,trait=null;
 let stats={},stamina=100,karma=50,round=0;
 let stress=20,injuryRisk=5,media=50;
 let relations={coach:50,teammates:50,fans:50,familyRel:50,partner:30,agent:40};
 let history=[],conversation=[];
+let milestones=[],headlines=[],achievements=[];
 let setupStep=0,selPos=null,selBg=null,selTrait=null,nameVal="";
 let tappedOpt=null,freeOpen=false,sOpen=false,hOpen=false;
 
@@ -254,47 +288,55 @@ function renderStep(){
       <h1 style="font-size:22px;font-weight:900;margin-bottom:6px" class="grad-text">NBA 人生模擬器</h1>
       <p style="font-size:12px;color:#64748b;line-height:1.8">位置系統 · 家庭背景 · 球員個性 · 隱藏業力</p>
     </div>
-    <input class="name-input" id="name-inp" placeholder="輸入你的球員姓名..." oninput="nameVal=this.value" onkeydown="if(event.key==='Enter'&&nameVal.trim())nextStep()"/>
-    <button class="primary-btn" onclick="nextStep()" disabled>選擇位置 →</button>`;
-    setTimeout(()=>{
-      const ni=document.getElementById("name-inp");
-      if(ni) ni.oninput=function(){nameVal=this.value; document.querySelector(".primary-btn").disabled=!nameVal.trim();};
-    },0);
+    <input class="name-input" id="name-inp" placeholder="輸入你的球員姓名..."
+      value="${nameVal}"
+      oninput="nameVal=this.value;document.querySelector('.primary-btn').disabled=!nameVal.trim();"
+      onkeydown="if(event.key==='Enter'&&this.value.trim()){nameVal=this.value;nextStep();}"/>
+    <button class="primary-btn" onclick="nextStep()" ${nameVal.trim()?"":"disabled"}>選擇位置 →</button>`;
   } else if(setupStep===1){
     c.innerHTML=`<div style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-align:center">🎯 選擇場上位置</div>
-      ${POSITIONS.map(p=>`<button class="sel-btn${selPos?.key===p.key?" selected":""}" onclick="selPos=POSITIONS.find(x=>x.key==='${p.key}');renderStep()">
+      ${POSITIONS.map(p=>`<button class="sel-btn${selPos&&selPos.key===p.key?" selected":""}" onclick="selPos=POSITIONS.find(x=>x.key==='${p.key}');renderStep()">
         <span class="sel-title">${p.label}</span><span class="sel-desc">${p.desc}</span>
-        <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">${Object.entries(p.bonuses).map(([k,v])=>dtag(v,SMETA[k]?.l.split(" ")[0])).join("")}</div>
+        <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">${Object.entries(p.bonuses).map(([k,v])=>dtag(v,SMETA[k]?SMETA[k].l.split(" ")[0]:"")).join("")}</div>
       </button>`).join("")}
       <button class="primary-btn" onclick="nextStep()" ${selPos?"":"disabled"}>選擇背景 →</button>`;
   } else if(setupStep===2){
     c.innerHTML=`<div style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-align:center">👨‍👩‍👧 選擇家庭背景</div>
-      ${BACKGROUNDS.map(b=>`<button class="sel-btn${selBg?.key===b.key?" selected":""}" onclick="selBg=BACKGROUNDS.find(x=>x.key==='${b.key}');renderStep()">
+      ${BACKGROUNDS.map(b=>`<button class="sel-btn${selBg&&selBg.key===b.key?" selected":""}" onclick="selBg=BACKGROUNDS.find(x=>x.key==='${b.key}');renderStep()">
         <span class="sel-title">${b.label}</span><span class="sel-desc">${b.desc}</span>
-        <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">${Object.entries(b.bonuses).map(([k,v])=>dtag(v,SMETA[k]?.l.split(" ")[0])).join("")}${dtag(b.wealth,"💰")}</div>
+        <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">${Object.entries(b.bonuses).map(([k,v])=>dtag(v,SMETA[k]?SMETA[k].l.split(" ")[0]:"")).join("")}${dtag(b.wealth,"💰")}</div>
       </button>`).join("")}
       <button class="primary-btn" onclick="nextStep()" ${selBg?"":"disabled"}>選擇個性 →</button>`;
   } else {
-    c.innerHTML=`<div style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-align:center">🎭 選擇球員個性</div>
-      ${TRAITS.map(t=>`<button class="sel-btn${selTrait?.key===t.key?" selected":""}" onclick="selTrait=TRAITS.find(x=>x.key==='${t.key}');renderStep()">
+    c.innerHTML<`<div style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-align:center">🎭 選擇球員個性</div>
+      ${TRAITS.map(t=>`<button class="sel-btn${selTrait&&selTrait.key===t.key?" selected":""}" onclick="selTrait=TRAITS.find(x=>x.key==='${t.key}');renderStep()">
         <span class="sel-title">${t.label}</span><span class="sel-desc">${t.desc}</span>
-        <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">${Object.entries(t.mods).map(([k,v])=>{const icon=SMETA[k]?.l.split(" ")[0]||EMETA[k]?.l.split(" ")[0]||RELMETA[k]?.l.split(" ")[0]||(k==="karma"?"⚖️":"");return dtag(v,icon);}).join("")}</div>
+        <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">${Object.entries(t.mods).map(([k,v])=>{const icon=SMETA[k]?SMETA[k].l.split(" ")[0]:EMETA[k]?EMETA[k].l.split(" ")[0]:RELMETA[k]?RELMETA[k].l.split(" ")[0]:(k==="karma"?"⚖️":"");return dtag(v,icon);}).join("")}</div>
       </button>`).join("")}
       <button class="primary-btn" onclick="startGame()" ${selTrait?"":"disabled"}>開始生涯 🏀</button>`;
   }
 }
 
-function nextStep(){ if(setupStep===0&&!nameVal.trim())return; setupStep++; renderStep(); }
+function nextStep(){
+  if(setupStep===0){
+    const ni=document.getElementById("name-inp");
+    if(ni) nameVal=ni.value.trim();
+    if(!nameVal)return;
+  }
+  setupStep++;
+  renderStep();
+}
 
 function startGame(){
   if(!selBg||!selTrait)return;
   playerName=nameVal.trim(); position=selPos; background=selBg; trait=selTrait;
-  stats={basketball:10,physical:10,mental:10,wealth:background.wealth,romance:5,family:50,fame:0,happiness:70};
+  stats={basketball:10,physical:10,mental:10,wealth:background.wealth,romance:5,family:50,fame:0,happiness;70};
   for(const[k,v]of Object.entries(position.bonuses))stats[k]=Math.min(100,(stats[k]||0)+v);
   for(const[k,v]of Object.entries(background.bonuses))stats[k]=Math.min(100,(stats[k]||0)+v);
   stamina=100; karma=50; round=0;
   stress=20; injuryRisk=5; media=50;
   relations={coach:50,teammates:50,fans:50,familyRel:50,partner:30,agent:40};
+  milestones=[]; headlines=[]; achievements=[];
   for(const[k,v]of Object.entries(trait.mods)){
     if(k==="stress")stress=Math.min(100,Math.max(0,stress+v));
     else if(k==="injuryRisk")injuryRisk=Math.min(100,Math.max(0,injuryRisk+v));
@@ -318,11 +360,12 @@ async function callGemini(msg){
   document.getElementById("free-row").className="";
   freeOpen=false;tappedOpt=null;
 
-  const ctx=`【玩家】名字:${playerName}|位置:${position.key}|背景:${background.key}|個性:${trait?.key||""}|業力:${karma}（勿告知玩家）
+  const ctx=`【玩家】名字:${playerName}|位置:${position.key}|背景:${background.key}|個性:${trait?trait.key:""}|業力:${karma}（勿告知玩家）
 數值:${Object.entries(stats).map(([k,v])=>k+":"+v).join(",")}
 體力:${stamina}/100
 壓力:${stress}/100|傷病風險:${injuryRisk}/100|媒體風評:${media}/100
-關係:教練信任${relations.coach}|隊友情誼${relations.teammates}|球迷支持${relations.fans}|家人關係${relations.familyRel}|感情關係${relations.partner}|經紀人能力${relations.agent}`;
+關係:教練信任${relations.coach}|隊友情誼${relations.teammates}|球迷支持${relations.fans}|家人關係${relations.familyRel}|感情關係${relations.partner}|經紀人能力${relations.agent}
+已達成里程碑:${milestones.length?milestones.join(","):"無"}`;
   conversation.push({role:"user",parts:[{text:ctx+"\n\n"+msg}]});
 
   try{
@@ -332,11 +375,11 @@ async function callGemini(msg){
     });
     const d=await r.json().catch(()=>({}));
     if(!r.ok||d.error){
-      const em=d.error?.message||r.statusText||"未知錯誤";
+      const em=d.error?d.error.message:r.statusText||"未知錯誤";
       showErr(`API錯誤（HTTP ${r.status}）:${em}`);
       return;
     }
-    const raw=d.candidates?.[0]?.content?.parts?.[0]?.text||"（回應錯誤）";
+    const raw=d.candidates&&d.candidates[0]?d.candidates[0].content.parts[0].text:"（回應錯誤）";
     conversation.push({role:"model",parts:[{text:raw}]});
     processResp(raw);
   }catch(e){showErr("連線錯誤："+e.message);}
@@ -362,10 +405,25 @@ function processResp(raw){
   };
   for(const[k,p]of Object.entries(rp)){const m=raw.match(p);if(m)relations[k]=Math.min(100,Math.max(0,+m[1]));}
   round++;
+
+  // Extract headline
+  const hlM=raw.match(/📰\s*媒體頭條[：:]\s*([^\n]+)/);
+  if(hlM){
+    const hl=hlM[1].trim();
+    headlines.unshift(hl);
+    if(headlines.length>10)headlines.pop();
+    const hbar=document.getElementById("headline-bar");
+    hbar.textContent="📰 "+hl;
+    hbar.style.display="block";
+  }
+
+  checkMilestones();
+  checkAchievements();
+
   if(raw.includes("退休")&&raw.includes("════"))triggerEnd();
 
   const opts=[];
-  for(const blk of raw.split(/(?=【[A-E]】)/)){
+  for(const blk of raw.split(/(==【[A-E]】)/)){
     const hm=blk.match(/【([A-E])】\s*(.+?)(?:\n|$)/);if(!hm)continue;
     const dm=blk.match(/DELTA:\s*([^\n]+)/i);const deltas={};
     if(dm)for(const pt of dm[1].split(",")){const x=pt.trim().match(/(\w+):\s*([+-]?\d+)/);if(x)deltas[x[1]]=+x[2];}
@@ -374,7 +432,7 @@ function processResp(raw){
 
   const storyEnd=raw.indexOf("════");
   let storyRaw=storyEnd>-1?raw.slice(0,storyEnd):raw;
-  storyRaw=storyRaw.replace(/📋[^\n]*\n?/,"").replace(/DELTA[^\n]*/gi,"").replace(/【[A-E]】[^\n]*/g,"").replace(/\n{3,}/g,"\n\n").trim();
+  storyRaw=storyRaw.replace(/📋[^\n]*\n?/,"").replace(/📰[^\n]*/g,"").replace(/DELTA:[^\n]*/gi,"").replace(/【[A-E]】[^\n]*/g,"").replace(/\n{3,}/g,"\n\n").trim();
 
   const sb=document.getElementById("story-box");
   sb.textContent=storyRaw;sb.style.display="block";
@@ -386,7 +444,7 @@ function processResp(raw){
     btn.className="opt-btn";btn.id="opt-"+opt.key;
     btn.innerHTML=`<div style="display:flex;align-items:flex-start;gap:9px">
       <span class="opt-key">${opt.key}</span><span style="flex:1">${opt.label}</span></div>
-      ${dp.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;padding-left:2px">${dp.map(([k,v])=>{const icon=k==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||EMETA[k]?.l.split(" ")[0]||RELMETA[k]?.l.split(" ")[0]||"");return dtag(v,icon);}).join("")}</div>`:""}`;
+      ${dp.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;padding-left:2px">${dp.map(([k,v])=>{const icon=k==="stamina"?"⚡":SMETA[k]?SMETA[k].l.split(" ")[0]:EMETA[k]?EMETA[k].l.split(" ")[0]:RELMETA[k]?RELMETA[k].l.split(" ")[0]:"";return dtag(v,icon);}).join("")}</div>`:""}`;
     btn.onclick=()=>pickOpt(opt);
     ol.appendChild(btn);
   }
@@ -395,11 +453,41 @@ function processResp(raw){
   document.getElementById("bottom-anchor").scrollIntoView({behavior:"smooth"});
 }
 
+function checkMilestones(){
+  for(const m of MILESTONE_DEF){
+    if(!milestones.includes(m.id)&&round>=m.minRound){
+      milestones.push(m.id);
+      history.push({round,milestone:true,label:m.label,desc:m.desc});
+      showAchToast(m.label);
+    }
+  }
+}
+
+function checkAchievements(){
+  for(const a of ACH_DEF){
+    if(!achievements.includes(a.id)&&a.check()){
+      achievements.push(a.id);
+      history.push({round,achievement:true,label:a.icon+" "+a.label});
+      showAchToast("🏆 解鎖成就："+a.label);
+    }
+  }
+}
+
+function showAchToast(msg){
+  const el=document.createElement("div");
+  el.style.cssText="position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#0f172a;border:1.5px solid #fbbf24;border-radius:10px;padding:8px 18px;font-size:13px;font-weight:700;color:#fbbf24;z-index:500;pointer-events:none;white-space:nowrap;max-width:90vw;text-overflow:ellipsis;overflow:hidden";
+  el.textContent=msg;
+  document.body.appendChild(el);
+  el.style.animation="floatUp 2.5s ease forwards";
+  setTimeout(()=>{ if(el.parentNode)el.parentNode.removeChild(el); },2500);
+}
+
 function pickOpt(opt){
   if(tappedOpt)return;tappedOpt=opt.key;
-  document.getElementById("opt-"+opt.key)?.classList.add("tapped");
+  const ob=document.getElementById("opt-"+opt.key);
+  if(ob)ob.classList.add("tapped");
   let kd=0;
-  if(/假球|藥物|賭博|外遇|刷腿|踢走|欺詐/.test(opt.label))kd=-12;
+  if(/假球|藥物|賭博|外遇|劈腿|踢走|欺騙/.test(opt.label))kd=-12;
   else if(/慈善|幫助|忠|道歉|支持/.test(opt.label))kd=8;
   karma=Math.min(100,Math.max(0,karma+kd));
   showFloat(opt.deltas);
@@ -434,7 +522,7 @@ function dtag(v,icon){const p=v>0;return`<span class="delta-tag ${p?"dp":"dn"}">
 function showLoad(on){document.getElementById("loading").style.display=on?"block":"none";}
 function showErr(m){showLoad(false);const sb=document.getElementById("story-box");sb.textContent="⚠️ "+m;sb.style.display="block";}
 function updateHeader(){
-  document.getElementById("header-sub").textContent=`${playerName} · ${position?.key||""} · 回合#${round}`;
+  document.getElementById("header-sub").textContent=`${playerName} · ${position?position.key:""} · 回合#${round}`;
   document.getElementById("karma-hint").textContent=karma>60?"☀️":karma>30?"🌥️":"⛈️";
 }
 
@@ -454,7 +542,7 @@ function renderStrip(){
 
 function renderStatRows(){
   const sc=stamina,col=sc>60?"#4ade80":sc>30?"#fbbf24":"#f87171";
-  document.getElementById("stam-bar-wrap").innerHTML=`<div class="stam-wrap"><span class="stam-label">⚡ 體力</span><div class="stat-track" style="height:8px"><div class="stat-fill" style="width:${sc}%;background:${col}"></div></div><span class="stat-val" style="color:${col}">${sc}/100</span></div>`;
+  document.getElementById("stam-bar-wrap").innerHTML<`<div class="stam-wrap"><span class="stam-label">⚡ 體力</span><div class="stat-track" style="height:8px"><div class="stat-fill" style="width:${sc}%;background:${col}"></div></div><span class="stat-val" style="color:${col}">${sc}/100</span></div>`;
   let html=Object.entries(SMETA).map(([k,m])=>`<div class="stat-row"><span class="stat-label">${m.l}</span><div class="stat-track"><div class="stat-fill" style="width:${Math.min(100,Math.max(0,stats[k]||0))}%;background:${m.c}"></div></div><span class="stat-val" style="color:${m.c}">${stats[k]||0}</span></div>`).join("");
   html+=`<div class="sect-divider">── 壓力・傷病・媒體 ──</div>`;
   const col2=stress>80?"#f87171":stress>50?"#fbbf24":"#4ade80";
@@ -472,8 +560,58 @@ function renderStatRows(){
 }
 
 function renderHist(){
-  if(!history.length){document.getElementById("hist-list").innerHTML=`<span style="font-size:12px;color:#475569">尚無記錄</span>`;return;}
-  document.getElementById("hist-list").innerHTML=[...history].reverse().map(h=>`<div style="font-size:12px;color:#64748b;margin-bottom:9px;border-left:2px solid rgba(249,115,22,0.25);padding-left:9px"><div style="color:#94a3b8;margin-bottom:3px">#${h.round} ${h.choice}</div><div style="display:flex;gap:3px;flex-wrap:wrap">${Object.entries(h.deltas).map(([k,v])=>{const icon=k==="stamina"?"⚡":(SMETA[k]?.l.split(" ")[0]||EMETA[k]?.l.split(" ")[0]||RELMETA[k]?.l.split(" ")[0]||"");return`<span style="font-size:9px;color:${v>0?"#4ade80":"#f87171"}">${icon}${v>0?"+"+v:v}</span>`;}).join("")}</div></div>`).join("");
+  const items=[];
+  // Milestones
+  if(milestones.length){
+    items.push({type:"sect",text:"── 里程碑 ──"});
+    for(const id of milestones){
+      const def=MILESTONE_DEF.find(m=>m.id===id);
+      if(def)items.push({type:"milestone",label:def.label,desc:def.desc});
+    }
+  }
+  // Achievements
+  if(achievements.length){
+    items.push({type:"sect",text:"── 成就 ──"});
+    for(const id of achievements){
+      const def=ACH_DEF.find(a=>a.id===id);
+      if(def)items.push({type:"achievement",label:def.icon+" "+def.label});
+    }
+  }
+  // Recent headlines
+  if(headlines.length){
+    items.push({type:"sect",text:"── 近期新聞 ──"});
+    for(const hl of headlines.slice(0,5))items.push({type:"headline",text:hl});
+  }
+  // Choice history
+  if(history.filter(h=>h.choice).length){
+    items.push({type:"sect",text:"── 選擇記錄 ──"});
+    const choices=history.filter(h=>h.choice).reverse();
+    for(const h of choices){
+      items.push({type:"choice",round:h.round,choice:h.choice,deltas:h.deltas});
+    }
+  }
+
+  if(!items.length){
+    document.getElementById("hist-list").innerHTML=`<span style="font-size:12px;color:#475569">尚無記錄</span>`;
+    return;
+  }
+
+  let html="";
+  for(const it of items){
+    if(it.type==="sect"){
+      html+=`<div style="font-size:10px;color:#475569;margin:8px 0 5px;text-align:center;letter-spacing:1px">${it.text}</div>`;
+    } else if(it.type==="milestone"){
+      html+=`<div style="font-size:12px;margin-bottom:6px;padding:5px 8px;background:rgba(249,115,22,0.08);border-left:2px solid #f97316;border-radius:4px"><div style="font-weight:700;color:#f97316">${it.label}</div><div style="color:#64748b;font-size:11px">${it.desc}</div></div>`;
+    } else if(it.type==="achievement"){
+      html+=`<div style="display:inline-block;font-size:11px;font-weight:700;color:#fbbf24;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);border-radius:6px;padding:3px 8px;margin:2px">${it.label}</div>`;
+    } else if(it.type==="headline"){
+      html+=`<div style="font-size:11px;color:#7dd3fc;margin-bottom:4px;padding-left:6px;border-left:2px solid rgba(56,189,248,0.3)">📰 ${it.text}</div>`;
+    } else if(it.type==="choice"){
+      const dstr=it.deltas?Object.entries(it.deltas).map(([k,v])=>{const icon=k==="stamina"?"⚡":SMETA[k]?SMETA[k].l.split(" ")[0]:EMETA[k]?EMETA[k].l.split(" ")[0]:RELMETA[k]?RELMETA[k].l.split(" ")[0]:"";return`<span style="font-size:9px;color:${v>0?"#4ade80":"#f87171"}">${icon}${v>0?"+"+v:v}</span>`;}).join(""):"";
+      html+=`<div style="font-size:12px;color:#64748b;margin-bottom:7px;border-left:2px solid rgba(249,115,22,0.25);padding-left:9px"><div style="color:#94a3b8;margin-bottom:3px">#${it.round} ${it.choice}</div><div style="display:flex;gap:3px;flex-wrap:wrap">${dstr}</div></div>`;
+    }
+  }
+  document.getElementById("hist-list").innerHTML=html;
 }
 
 function toggleDrawer(w){
@@ -501,7 +639,7 @@ function showFloat(deltas){
     if(k==="stamina"){icon="⚡";isGood=v>0;}
     else if(EMETA[k]){icon=EMETA[k].l.split(" ")[0];isGood=(k==="media")?v>0:v<0;}
     else if(RELMETA[k]){icon=RELMETA[k].l.split(" ")[0];isGood=v>0;}
-    else{icon=SMETA[k]?.l.split(" ")[0]||"";isGood=v>0;}
+    else{icon=SMETA[k]?SMETA[k].l.split(" ")[0]:"";isGood=v>0;}
     return`<span style="font-size:12px;color:${isGood?"#4ade80":"#f87171"};background:rgba(2,6,23,0.9);border-radius:8px;padding:4px 12px;font-weight:700">${icon}${v>0?"+"+v:v}</span>`;
   }).join(" ");
   fd.style.display="flex";
