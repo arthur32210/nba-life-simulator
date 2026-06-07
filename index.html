@@ -167,7 +167,8 @@ DELTA可用欄位：basketball,physical,mental,wealth,romance,family,fame,happin
 教練信任:[值]|隊友情誼:[值]|球迷支持:[值]
 家人關係:[值]|感情關係:[值]|經紀人能力:[值]
 台灣籃球文化真實（HBL/SBL/UBA/瓊斯盃），NBA真實名稱可用，R18暗示不露骨
-round 191-199是退休倒數階段，每回合必須圍繞以下主題之一：最後一季、老隊友告別、家人回顧、球迷致敬、名人堂討論、財務與品牌、是否轉任教練、最後一次季後賽、退休記者會前夕。仍然提供A-E選項，但選項偶向人生收尾、傳承、家庭、媒體、財務與自我和解，勿再做菜鳥訓練升級類事件。`;
+round 191-199是退休倒數階段，每回合必須圍繞以下主題之一：最後一季、老隊友告別、家人回顧、球迷致敬、名人堂討論、財務與品牌、是否轉任教練、最後一次季後賽、退休記者會前夕。仍然提供A-E選項，但選項偶向人生收尾、傳承、家庭、媒體、財務與自我和解，勿再做菜鳥訓練升級類事件。
+老化規則：round>=140後球員進入老化期，體能、體力、傷病風險逐步惡化。你不得無理由把老將的體能或體力大幅拉回滿值。round>=170後除非選項明確是休養復健輪休，否則體力不得高於85。round>=190後體力不得高於75，體能不得高於85，傷病風險不得低於40。這些限制優先於一般爽感成長。`;
 
 const POSITIONS=[
   {key:"PG",label:"🎯 PG 控球後衛",desc:"智力型，傳球視野第一",bonuses:{mental:10,basketball:5}},
@@ -270,11 +271,17 @@ function saveApiKey(){
 function applyAging(){
   if(round<140)return;
   const agePenalty=Math.floor((round-140)/15)+1;
-  stats.physical=Math.max(0,stats.physical-agePenalty);
+  stats.physical=Math.max(0,(stats.physical||0)-agePenalty);
   injuryRisk=Math.min(100,injuryRisk+agePenalty);
   stress=Math.min(100,stress+Math.max(1,Math.floor(agePenalty/2)));
-  if(round>170){
+  if(round>=170){
+    stamina=Math.min(stamina,85);
     stamina=Math.max(0,stamina-agePenalty);
+  }
+  if(round>=190){
+    stamina=Math.min(stamina,75);
+    stats.physical=Math.min(stats.physical||0,85);
+    injuryRisk=Math.max(injuryRisk,40);
   }
 }
 
