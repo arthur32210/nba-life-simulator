@@ -251,6 +251,7 @@ const ACH_DEF=[
 ];
 
 let apiKey="",playerName="",position=null,background=null,trait=null;
+let lastUserMsg="";
 let stats={},stamina=100,karma=50,round=0;
 let stress=20,injuryRisk=5,media=50;
 let relations={coach:50,teammates:50,fans:50,familyRel:50,partner:30,agent:40};
@@ -384,6 +385,7 @@ function startGame(){
 
 const GEMINI_MODELS=["gemini-2.5-flash","gemini-2.0-flash","gemini-2.0-flash-lite"];
 async function callGemini(msg){
+  lastUserMsg=msg;
   showLoad(true);
   document.getElementById("story-box").style.display="none";
   document.getElementById("options-list").innerHTML="";
@@ -400,7 +402,8 @@ async function callGemini(msg){
 已達成里程碑:${milestones.length?milestones.join(","):"無"}
 已解鎖成就:${achievements.length?achievements.join(","):"無"}
 最近新聞:${headlines.slice(0,5).join("/")||"無"}`
-  conversation.push({role:"user",parts:[{text:ctx+"\n\n"+msg}]});
+  const _userTurn={role:"user",parts:[{text:ctx+"\n\n"+msg}]};
+  conversation.push(_userTurn);
 
   let _lastErr="";let _raw="";
   for(let _mi=0;_mi<GEMINI_MODELS.length;_mi++){
@@ -414,23 +417,23 @@ async function callGemini(msg){
       _d=await _r.json().catch(()=>({}));
     }catch(e){
       if(_mi<GEMINI_MODELS.length-1){_lastErr="連線錯誤（"+_model+"）："+(e&&e.message?e.message:String(e));continue;}
-      showErr("連線錯誤："+(e&&e.message?e.message:String(e)));return;
+      failWithError("連線錯誤："+(e&&e.message?e.message:String(e)));return;
     }
     if(!_r.ok||_d.error){
       const _em=_d.error?_d.error.message:_r.statusText||"未知錯誤";
       const _retry=[404,429,500,502,503,504].includes(_r.status);
-      if(_retry&&_mi<GEMINI_MODELS.length-1){_lastErr="API錯誤（"+_model+" / HTTP "+_r.status+"）："+_em;continue;}
-      showErr("API錯誤（"+_model+" / HTTP "+_r.status+"）："+_em);return;
+      if(_retry){_lastErr="API錯誤（"+_model+" / HTTP "+_r.status+"）："+_em;continue;}
+      failWithError("API錯誤（"+_model+" / HTTP "+_r.status+"）："+_em);return;
     }
     const cand=_d.candidates&&_d.candidates[0];
     const raw=cand&&cand.content&&cand.content.parts?cand.content.parts.map(p=>p.text||"").join("\n").trim():"";
     if(!raw){
       const reason=(_d.promptFeedback&&_d.promptFeedback.blockReason)||(cand&&cand.finishReason)||(_d.error&&_d.error.message)||"沒有回傳文字，可能被安全規則阻擋";
-      showErr("API回應無文字："+reason);return;
+      failWithError("API回應無文字："+reason);return;
     }
     _raw=raw;break;
   }
-  if(!_raw){showErr("Gemini 目前忙碌或此 Key 不支援可用模型，請稍後再試，或換一把 Google AI Studio API Key。");return;}
+  if(!_raw){failWithError("Gemini 目前忙碑，請稍後再按「重試本回合」。");return;}
   conversation.push({role:"model",parts:[{text:_raw}]});
   conversation=conversation.slice(-12);
   processResp(_raw);
@@ -473,7 +476,7 @@ function processResp(raw){
 
   applyAging();
   const explicitRetire=/退休(演說|結局|結算|典禮|名人堂|正式退休)/.test(raw);
-  if(shouldForceRetire()||explicitRetire){triggerEnd();document.getElementById("options-list").innerHTML="";document.getElementById("free-toggle").style.display="none";return;}
+  if(shouldForceRetire()||explicitRetire){updateHeader();renderStrip();renderStatRows();renderHist();triggerEnd();document.getElementById("options-list").innerHTML="";document.getElementById("free-toggle").style.display="none";return;}
 
   const opts=[];
   for(const blk of raw.split(/(?=【[A-E]】)/)){
@@ -485,7 +488,13 @@ function processResp(raw){
 
   const storyEnd=raw.indexOf("════");
   let storyRaw=storyEnd>-1?raw.slice(0,storyEnd):raw;
-  storyRaw=storyRaw.replace(/📋[^\n]*\n?/,"").replace(/📰[^\n]*/g,"").replace(/DELTA:[^\n]*/gi,"").replace(/【[A-E]】[^\n]*/g,"").replace(/\n{3,}/g,"\n\n").trim();
+  storyRaw=storyRaw
+    .replace(/📋[\s\S]*?(?=\n\n|第\s*\d+\s*回合|童年|國小|國中|HBL|UBA|NBA|今天|這一天)/,"")
+    .replace(/📰[^\n]*/g,"")
+    .replace(/DELTA:[^\n]*/gi,"")
+    .replace(/感情[：:][\s\S]*?(?=\n\n|$)/,"")
+    .replace(/\n{3,}/g,"\n\n")
+    .trim();
 
   const sb=document.getElementById("story-box");
   sb.textContent=storyRaw;sb.style.display="block";
@@ -573,7 +582,8 @@ function triggerEnd(){
 
 function dtag(v,icon){const p=v>0;return`<span class="delta-tag ${p?"dp":"dn"}">${icon||""}${p?"+"+v:v}</span>`;}
 function showLoad(on){document.getElementById("loading").style.display=on?"block":"none";}
-function showErr(m){showLoad(false);const sb=document.getElementById("story-box");sb.textContent="⚠️ "+m;sb.style.display="block";}
+function showErr(m){showLoad(false);const sb=document.getElementById("story-box");sb.textContent="⚠️ "+m;sb.style.display="block";if(lastUserMsg){const btn=document.createElement("button");btn.textContent="🔁 重試本回合";btn.onclick=function(){callGemini(lastUserMsg);};btn.style.cssText="display:block;margin-top:8px;padding:6px 14px;background:#f97316;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;";sb.appendChild(btn);}}
+function failWithError(m){conversation.pop();showErr(m);}
 function updateHeader(){
   document.getElementById("header-sub").textContent=playerName?(playerName+" · "+(position?position.key:"")+" · "+getCurrentStage()+" · 回合#"+round+"/200"):"Gemini 獨立版";
   document.getElementById("karma-hint").textContent=karma>60?"☀️":karma>30?"🌥️":"⛈️";
