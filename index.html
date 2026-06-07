@@ -166,7 +166,8 @@ DELTA可用欄位：basketball,physical,mental,wealth,romance,family,fame,happin
 壓力:[值]|傷病風險:[值]|媒體風評:[值]
 教練信任:[值]|隊友情誼:[值]|球迷支持:[值]
 家人關係:[值]|感情關係:[值]|經紀人能力:[值]
-台灣籃球文化真實（HBL/SBL/UBA/瓊斯盃），NBA真實名稱可用，R18暗示不露骨`;
+台灣籃球文化真實（HBL/SBL/UBA/瓊斯盃），NBA真實名稱可用，R18暗示不露骨
+round 191-199是退休倒數階段，每回合必須圍繞以下主題之一：最後一季、老隊友告別、家人回顧、球迷致敬、名人堂討論、財務與品牌、是否轉任教練、最後一次季後賽、退休記者會前夕。仍然提供A-E選項，但選項偶向人生收尾、傳承、家庭、媒體、財務與自我和解，勿再做菜鳥訓練升級類事件。`;
 
 const POSITIONS=[
   {key:"PG",label:"🎯 PG 控球後衛",desc:"智力型，傳球視野第一",bonuses:{mental:10,basketball:5}},
@@ -231,21 +232,21 @@ const MILESTONE_DEF=[
 ];
 
 const ACH_DEF=[
-  {id:"popstar",   label:"人氣王",      icon:"👑", check:()=>stats.fame>70},
-  {id:"clutch",    label:"關鍵先生",    icon:"🎯", check:()=>stats.basketball>80},
-  {id:"glass",     label:"玻璃王牌",    icon:"💎", check:()=>injuryRisk>80},
-  {id:"mediaking", label:"媒體寵兒",    icon:"📺", check:()=>media>75},
-  {id:"toxic",     label:"球隊毒瘤",    icon:"💀", check:()=>relations.teammates<20||karma<20},
-  {id:"nightking", label:"夜店之王",    icon:"🍾", check:()=>trait&&trait.key==="nightlife"&&stats.fame>50},
-  {id:"family",    label:"家庭支柱",    icon:"🏠", check:()=>relations.familyRel>80},
-  {id:"grinder",   label:"訓練狂魔",    icon:"💪", check:()=>stress>85&&stats.basketball>75},
-  {id:"twlight",   label:"台灣之光",    icon:"🇹🇼", check:()=>round>8&&stats.fame>60},
-  {id:"bankrupt",  label:"破產傳奇",    icon:"💸", check:()=>stats.wealth<10&&round>6},
-  {id:"comeback",  label:"浪子回頭",    icon:"🙏", check:()=>karma<30&&stress>70&&stats.happiness>55},
-  {id:"champ",     label:"總冠軍老將",  icon:"🏆", check:()=>milestones.includes("finals")&&stats.basketball>75},
-  {id:"hblhero",   label:"HBL英雄",    icon:"🔥", check:()=>milestones.includes("hbl")&&stats.basketball>50},
-  {id:"undraft",   label:"選秀黑馬",    icon:"⚡", check:()=>milestones.includes("draft")&&background&&background.key==="poor"},
-  {id:"fallen",    label:"落選傳奇",    icon:"😤", check:()=>round>10&&stats.fame<20&&stats.basketball>70},
+  {id:"HBL英雄",icon:"🏫",label:"HBL英雄",check:()=>milestones.includes("HBL關鍵戰")&&stats.basketball>=45},
+  {id:"選秀黑馬",icon:"🌟",label:"選秀黑馬",check:()=>milestones.includes("選秀夜")&&stats.fame>=25},
+  {id:"菜鳥衝擊",icon:"🏀",label:"菜鳥衝擊",check:()=>milestones.includes("菜鳥年")&&stats.basketball>=55},
+  {id:"季後賽初體驗",icon:"🏆",label:"季後賽初體驗",check:()=>milestones.includes("第一次季後賽")},
+  {id:"總冠軍窗口",icon:"🥇",label:"總冠軍窗口",check:()=>milestones.includes("總冠軍賽")},
+  {id:"媒體寵兒",icon:"📺",label:"媒體寵兒",check:()=>media>=70},
+  {id:"人氣王",icon:"⭐",label:"人氣王",check:()=>stats.fame>=70||relations.fans>=75},
+  {id:"關鍵先生",icon:"🥊",label:"關鍵先生",check:()=>stats.basketball>=75},
+  {id:"球隊核心",icon:"💪",label:"球隊核心",check:()=>relations.coach>=70&&relations.teammates>=55},
+  {id:"家庭支柱",icon:"❤",label:"家庭支柱",check:()=>relations.familyRel>=70},
+  {id:"鐵人",icon:"🔩",label:"鐵人",check:()=>round>=120&&injuryRisk<=50},
+  {id:"壓力麍",icon:"😤",label:"壓力麍",check:()=>stress>=75},
+  {id:"玻璃王牌",icon:"💎",label:"玻璃王牌",check:()=>injuryRisk>=75&&stats.basketball>=65},
+  {id:"浪子回頭",icon:"🌈",label:"浪子回頭",check:()=>karma<35&&media>=50&&round>=100},
+  {id:"傳奇收尾",icon:"🍤",label:"傳奇收尾",check:()=>round>=190&&stats.fame>=70},
 ];
 
 let apiKey="",playerName="",position=null,background=null,trait=null;
@@ -265,6 +266,16 @@ function saveApiKey(){
   const k=document.getElementById("apikey-input").value.trim();
   if(!k||k.length<10){alert("請輸入有效的 Gemini API Key");return;}
   apiKey=k; localStorage.setItem("nba_gemini_key",k); showSetup();
+}
+function applyAging(){
+  if(round<140)return;
+  const agePenalty=Math.floor((round-140)/15)+1;
+  stats.physical=Math.max(0,stats.physical-agePenalty);
+  injuryRisk=Math.min(100,injuryRisk+agePenalty);
+  stress=Math.min(100,stress+Math.max(1,Math.floor(agePenalty/2)));
+  if(round>170){
+    stamina=Math.max(0,stamina-agePenalty);
+  }
 }
 
 function getGeminiHeaders(){
@@ -461,6 +472,7 @@ function processResp(raw){
     ol.appendChild(btn);
   }
   document.getElementById("free-toggle").style.display="block";
+  applyAging();
   updateHeader();renderStrip();renderStatRows();renderHist();
   document.getElementById("bottom-anchor").scrollIntoView({behavior:"smooth"});
 }
