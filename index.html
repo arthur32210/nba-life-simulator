@@ -290,9 +290,9 @@ function renderStep(){
     </div>
     <input class="name-input" id="name-inp" placeholder="輸入你的球員姓名..."
       value="${nameVal}"
-      oninput="nameVal=this.value;document.querySelector('.primary-btn').disabled=!nameVal.trim();"
+      oninput="nameVal=this.value; const btn=document.getElementById('name-next-btn'); if(btn) btn.disabled=!nameVal.trim();"
       onkeydown="if(event.key==='Enter'&&this.value.trim()){nameVal=this.value;nextStep();}"/>
-    <button class="primary-btn" onclick="nextStep()" ${nameVal.trim()?"":"disabled"}>選擇位置 →</button>`;
+    <button id="name-next-btn" class="primary-btn" onclick="nextStep()" ${nameVal.trim()?"":"disabled"}>選擇位置 →</button>`;
   } else if(setupStep===1){
     c.innerHTML=`<div style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-align:center">🎯 選擇場上位置</div>
       ${POSITIONS.map(p=>`<button class="sel-btn${selPos&&selPos.key===p.key?" selected":""}" onclick="selPos=POSITIONS.find(x=>x.key==='${p.key}');renderStep()">
