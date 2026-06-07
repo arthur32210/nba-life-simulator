@@ -187,7 +187,7 @@ const TRAITS=[
   {key:"social",label:"🎉 社交王",desc:"名氣、感情、球迷支持高，但訓練專注較低",
    mods:{fame:10,romance:8,fans:8,basketball:-3}},
   {key:"fragile",label:"😢 玻璃心",desc:"心理起伏大，壓力容易升高，但故事事件更戲劇化",
-   mods:{happiness;5,stress:15,mental:-5}},
+   mods:{happiness:5,stress:15,mental:-5}},
   {key:"nightlife",label:"🍾 夜店咖",desc:"名氣與感情事件多，但業力、教練信任、媒體風評風險高",
    mods:{fame:8,romance:10,karma:-10,coach:-10,media:-10}},
 ];
@@ -308,7 +308,7 @@ function renderStep(){
       </button>`).join("")}
       <button class="primary-btn" onclick="nextStep()" ${selBg?"":"disabled"}>選擇個性 →</button>`;
   } else {
-    c.innerHTML<`<div style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-align:center">🎭 選擇球員個性</div>
+    c.innerHTML=`<div style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-align:center">🎭 選擇球員個性</div>
       ${TRAITS.map(t=>`<button class="sel-btn${selTrait&&selTrait.key===t.key?" selected":""}" onclick="selTrait=TRAITS.find(x=>x.key==='${t.key}');renderStep()">
         <span class="sel-title">${t.label}</span><span class="sel-desc">${t.desc}</span>
         <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">${Object.entries(t.mods).map(([k,v])=>{const icon=SMETA[k]?SMETA[k].l.split(" ")[0]:EMETA[k]?EMETA[k].l.split(" ")[0]:RELMETA[k]?RELMETA[k].l.split(" ")[0]:(k==="karma"?"⚖️":"");return dtag(v,icon);}).join("")}</div>
@@ -542,7 +542,7 @@ function renderStrip(){
 
 function renderStatRows(){
   const sc=stamina,col=sc>60?"#4ade80":sc>30?"#fbbf24":"#f87171";
-  document.getElementById("stam-bar-wrap").innerHTML<`<div class="stam-wrap"><span class="stam-label">⚡ 體力</span><div class="stat-track" style="height:8px"><div class="stat-fill" style="width:${sc}%;background:${col}"></div></div><span class="stat-val" style="color:${col}">${sc}/100</span></div>`;
+  document.getElementById("stam-bar-wrap").innerHTML=`<div class="stam-wrap"><span class="stam-label">⚡ 體力</span><div class="stat-track" style="height:8px"><div class="stat-fill" style="width:${sc}%;background:${col}"></div></div><span class="stat-val" style="color:${col}">${sc}/100</span></div>`;
   let html=Object.entries(SMETA).map(([k,m])=>`<div class="stat-row"><span class="stat-label">${m.l}</span><div class="stat-track"><div class="stat-fill" style="width:${Math.min(100,Math.max(0,stats[k]||0))}%;background:${m.c}"></div></div><span class="stat-val" style="color:${m.c}">${stats[k]||0}</span></div>`).join("");
   html+=`<div class="sect-divider">── 壓力・傷病・媒體 ──</div>`;
   const col2=stress>80?"#f87171":stress>50?"#fbbf24":"#4ade80";
