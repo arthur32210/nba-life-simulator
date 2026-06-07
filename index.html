@@ -286,15 +286,10 @@ function applyAging(){
 }
 
 function getGeminiHeaders(){
-  const headers={"Content-Type":"application/json"};
-  if(apiKey.startsWith("AQ.")){
-    headers.Authorization=`Bearer ${apiKey}`;
-  }else if(apiKey.startsWith("AIza")){
-    headers["x-goog-api-key"]=apiKey;
-  }else{
-    headers["x-goog-api-key"]=apiKey;
-  }
-  return headers;
+  return {
+    "Content-Type":"application/json",
+    "x-goog-api-key":apiKey
+  };
 }
 
 function showSetup(){
