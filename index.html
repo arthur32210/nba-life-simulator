@@ -330,7 +330,7 @@ function nextStep(){
 function startGame(){
   if(!selBg||!selTrait)return;
   playerName=nameVal.trim(); position=selPos; background=selBg; trait=selTrait;
-  stats={basketball:10,physical:10,mental:10,wealth:background.wealth,romance:5,family:50,fame:0,happiness;70};
+  stats={basketball:10,physical:10,mental:10,wealth:background.wealth,romance:5,family:50,fame:0,happiness:70};
   for(const[k,v]of Object.entries(position.bonuses))stats[k]=Math.min(100,(stats[k]||0)+v);
   for(const[k,v]of Object.entries(background.bonuses))stats[k]=Math.min(100,(stats[k]||0)+v);
   stamina=100; karma=50; round=0;
