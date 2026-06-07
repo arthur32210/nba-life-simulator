@@ -261,7 +261,17 @@ let milestones=[],headlines=[],achievements=[];
 let setupStep=0,selPos=null,selBg=null,selTrait=null,nameVal="";
 let tappedOpt=null,freeOpen=false,sOpen=false,hOpen=false;
 
-window.onload=()=>{ const k=localStorage.getItem("nba_gemini_key"); if(k){apiKey=k;showSetup();} };
+window.onload=()=>{
+  const params=new URLSearchParams(location.search);
+  if(params.get("reset")==="1"){
+    localStorage.removeItem("nba_gemini_key");
+    sessionStorage.clear();
+    apiKey="";
+    history.replaceState(null,"",location.pathname);
+  }
+  const k=localStorage.getItem("nba_gemini_key");
+  if(k){apiKey=k;showSetup();}
+};
 
 function saveApiKey(){
   const k=document.getElementById("apikey-input").value.trim();
