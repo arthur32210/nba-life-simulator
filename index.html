@@ -266,7 +266,7 @@ async function callGemini(msg){
   document.getElementById("free-row").className="";
   freeOpen=false;tappedOpt=null;
 
-  const ctx=`【玩家】名字:${playerName}|位置:${position.key}z背景:${background.key}|業力:${karma}（勿告知玩家）\n數值:${Object.entries(stats).map(([k,v])=>k+":"+v).join(",")}\n體力:${stamina}/100`;
+  const ctx=`【玩家】名字:${playerName}|位置:${position.key}|背景:${background.key}|業力:${karma}（勿告知玩家）\n數值:${Object.entries(stats).map(([k,v])=>k+":"+v).join(",")}\n體力:${stamina}/100`;
   conversation.push({role:"user",parts:[{text:ctx+"\n\n"+msg}]});
 
   try{
@@ -283,7 +283,7 @@ async function callGemini(msg){
     const raw=d.candidates?.[0]?.content?.parts?.[0]?.text||"（回應錯誤）";
     conversation.push({role:"model",parts:[{text:raw}]});
     processResp(raw);
-  }catch(e){showErr("值線振誤："+e.message);}
+  }catch(e){showErr("連線錯誤："+e.message);}
 }
 
 function processResp(raw){
@@ -299,13 +299,13 @@ function processResp(raw){
   const opts=[];
   for(const blk of raw.split(/(?=【[A-E]】)/)){
     const hm=blk.match(/【([A-E])】\s*(.+?)(?:\n|$)/);if(!hm)continue;
-    const dm=blk.match(/DELTA9_*([^\n]+)/i);const deltas={};
+    const dm=blk.match(/DELTA:\s*([^\n]+)/i/i);const deltas={};
     if(dm)for(const p of dm[1].split(",")){const x=p.trim().match(/(\w+):\s*([+-]?\d+)/);if(x)deltas[x[1]]=+x[2];}
     opts.push({key:hm[1],label:hm[2].trim(),deltas});
   }
 
-  const story=raw.replace(/📋X^\n]*\n?/,"").replace(/DELTA[^\n]*/gi,"").replace(/【[A-E]】[^\n]*/g,"")
-    .replace(/════[\s\S]*?體力：:]\s*\d+[^\n]*/g,"").replace(/\n{3,}/g,"\n\n").trim();
+  const story=raw.replace(/📋[^\n]*\n?/,"").replace(/DELTA[^\n]*/gi,"").replace(/【[A-E]】[^\n]*/g,"")
+    .replace(/════[\s\S]*?體力[：:]\s*\d+[^\n]*[^\n]*/g,"").replace(/\n{3,}/g,"\n\n").trim();
 
   const sb=document.getElementById("story-box");
   sb.textContent=story;sb.style.display="block";
