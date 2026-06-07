@@ -572,6 +572,8 @@ storyRaw=storyRaw
     .replace(/\uD83D\uDCF0[^\n]*/g,"")
     .replace(/DELTA:[^\n]*/gi,"")
     .replace(/\n{3,}/g,"\n\n")
+    .replace(/^[^\n]*\|[^\n]*\n?/gm,"")
+    .replace(/^(感情|壓力|教練信任|家人關係)[^\n]*\n?/gm,"")
     .trim();
 
   const sb=document.getElementById("story-box");
