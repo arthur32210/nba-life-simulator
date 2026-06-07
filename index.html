@@ -168,7 +168,16 @@ DELTA可用欄位：basketball,physical,mental,wealth,romance,family,fame,happin
 家人關係:[值]|感情關係:[值]|經紀人能力:[值]
 台灣籃球文化真實（HBL/SBL/UBA/瓊斯盃），NBA真實名稱可用，感情與人生事件請保持成人向但不露骨；未成年階段不得出現性暗示或成人情節。
 round 191-199是退休倒數階段，每回合必須圍繞以下主題之一：最後一季、老隊友告別、家人回顧、球迷致敬、名人堂討論、財務與品牌、是否轉任教練、最後一次季後賽、退休記者會前夕。仍然提供A-E選項，但選項偶向人生收尾、傳承、家庭、媒體、財務與自我和解，勿再做菜鳥訓練升級類事件。
-老化規則：round>=140後球員進入老化期，體能、體力、傷病風險逐步惡化。你不得無理由把老將的體能或體力大幅拉回滿值。round>=170後除非選項明確是休養復健輪休，否則體力不得高於85。round>=190後體力不得高於75，體能不得高於85，傷病風險不得低於40。這些限制優先於一般爽感成長。`;
+老化規則：round>=140後球員進入老化期，體能、體力、傷病風險逐步惡化。你不得無理由把老將的體能或體力大幅拉回滿值。round>=170後除非選項明確是休養復健輪休，否則體力不得高於85。round>=190後體力不得高於75，體能不得高於85，傷病風險不得低於40。這些限制優先於一般爽感成長。
+
+【格式規定】選項必須使用【A】至【E】格式，严禁 A. B. A、 等其他格式。
+【A】選項文字
+DELTA: stat:+N
+【B】選項文字
+DELTA: ...
+【C】...
+【D】...
+【E】...`;
 
 const POSITIONS=[
   {key:"PG",label:"🎯 PG 控球後衛",desc:"智力型，傳球視野第一",bonuses:{mental:10,basketball:5}},
@@ -479,19 +488,19 @@ function processResp(raw){
 
 
   const opts=[];
-  for(const blk of raw.split(/(?=【[A-E]】)/)){
-    const hm=blk.match(/【([A-E])】\s*(.+?)(?:\n|$)/);if(!hm)continue;
-    const dm=blk.match(/DELTA:\s*([^\n]+)/i);const deltas={};
-    if(dm)for(const pt of dm[1].split(",")){const x=pt.trim().match(/(\w+):\s*([+-]?\d+)/);if(x)deltas[x[1]]=+x[2];}
-    opts.push({key:hm[1],label:hm[2].trim(),deltas});
+  const optRegex=/(?:【([A-E])】|(?:^|\n)([A-E])[\.\u3001)]\s*)(.+?)(?=\n(?:【[A-E]】|[A-E][\.\u3001)]\s)|\n════|$)/gs;
+  for(const m of raw.matchAll(optRegex)){
+    const key=m[1]||m[2];
+    const block=m[0];
+    const label=(m[3]||"").split("\n")[0].trim();
+    const dm=block.match(/DELTA:\s*([^\n]+)/i);const deltas={};
+    if(dm){for(const pt of dm[1].split(",")){const x=pt.trim().match(/(\w+):\s*([+-]?\d+)/);if(x)deltas[x[1]]=+x[2];}}
+    if(key&&label)opts.push({key,label,deltas});
   }
-
-  const storyEnd=raw.indexOf("════");
-  let storyRaw=storyEnd>-1?raw.slice(0,storyEnd):raw;
   storyRaw=storyRaw
-    .replace(/【[A-E]】[\s\S]*?(?=【[A-E]】|════|$)/g,"")
-    .replace(/📋[\s\S]*?(?=\n\n|第\s*\d+\s*回合|童年|國小|國中|HBL|UBA|NBA|今天|這一天)/,"")
-    .replace(/📰[^\n]*/g,"")
+    .replace(/(?:【[A-E]】|\n[A-E][\.\u3001)]\s)[\s\S]*?(?=\n(?:【[A-E]】|[A-E][\.\u3001)]\s)|\n════|$)/g,"")
+    .replace(/\uD83D\uDCCB[\s\S]*?(?=\n\n|\u7B2C\s*\d+\s*\u56DE\u5408|\u7AE5\u5E74|\u570B\u5C0F|\u570B\u4E2D|HBL|UBA|NBA|\u4ECA\u5929|\u9019\u4E00\u5929)/,"")
+    .replace(/\uD83D\uDCF0[^\n]*/g,"")
     .replace(/DELTA:[^\n]*/gi,"")
     .replace(/\n{3,}/g,"\n\n")
     .trim();
