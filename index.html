@@ -157,7 +157,8 @@ round >= 200 必須輸出退休結局，不再提供普通生涯延伸劇情。
 感情:[值]|家庭:[值]|名氣:[值]|快樂:[值]|體力:[值]/100
 壓力:[值]|傷病風險:[值]|媒體風評:[值]
 教練信任:[值]|隊友情誼:[值]|球迷支持:[值]
-家人關係:[值]|感情關係:[值]|經紀人能力:[�：每項影響2~4數值+stamina，能力值±1~20，stamina -5~-25
+家人關係:[值]|感情關係:[值]|經紀人能力:[值]
+DELTA規則：每項影響2~4數值+stamina，能力值±1~20，stamina -5~-25
 DELTA可用欄位：basketball,physical,mental,wealth,romance,family,fame,happiness,stamina,stress,injuryRisk,media,coach,teammates,fans,familyRel,partner,agent
 5) ════ 📊狀態 ════
 籃球技術:[值]|體能:[值]|心理:[值]|財富:[值]
@@ -366,15 +367,15 @@ async function callGemini(msg){
   document.getElementById("free-row").className="";
   freeOpen=false;tappedOpt=null;
 
-  const ctx="【玩家】名字:"+playerName+"|位置:"+position.key+"|背景:"+background.key+"|個性:"+(trait?trait.key:"")+"|業力:"+karma+"（勿告知玩家）
-目前階段:"+getCurrentStage()+"|目前回合:"+round+"/200
-數值:"+Object.entries(stats).map(([k,v])=>k+":"+v).join(",")+"
-體力:"+stamina+"/100
-壓力:"+stress+"/100|傷病風險:"+injuryRisk+"/100|媒體風評:"+media+"/100
-關係:教練信任"+relations.coach+"|隊友情誼"+relations.teammates+"|球迷支持"+relations.fans+"|家人關係"+relations.familyRel+"|感情關係"+relations.partner+"|經紀人能力"+relations.agent+"
-已達成里程碑:"+(milestones.length?milestones.join(","):"無")+"
-已解鎖成就:"+(achievements.length?achievements.join(","):"無")+"
-最近新聞:"+(headlines.slice(0,5).join("/")||"無")
+  const ctx=`【玩家】名字:${playerName}|位置:${position.key}|背景:${background.key}|個性:${trait?trait.key:""}|業力:${karma}（勿告知玩家）
+目前階段:${getCurrentStage()}|目前回合:${round}/200
+數值:${Object.entries(stats).map(([k,v])=>k+":"+v).join(",")}
+體力:${stamina}/100
+壓力:${stress}/100|傷病風險:${injuryRisk}/100|媒體風評:${media}/100
+關係:教練信任${relations.coach}|隊友情誼${relations.teammates}|球迷支持${relations.fans}|家人關係${relations.familyRel}|感情關係${relations.partner}|經紀人能力${relations.agent}
+已達成里程碑:${milestones.length?milestones.join(","):"無"}
+已解鎖成就:${achievements.length?achievements.join(","):"無"}
+最近新聞:${headlines.slice(0,5).join("/")||"無"}`
   conversation.push({role:"user",parts:[{text:ctx+"\n\n"+msg}]});
 
   try{
