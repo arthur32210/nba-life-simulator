@@ -433,7 +433,7 @@ async function callGemini(msg){
     }
     _raw=raw;break;
   }
-  if(!_raw){failWithError("Gemini 目前忙碑，請稍後再按「重試本回合」。");return;}
+  if(!_raw){failWithError("Gemini 目前忙碌，請稍後再按「重試本回合」。");return;}
   conversation.push({role:"model",parts:[{text:_raw}]});
   conversation=conversation.slice(-12);
   processResp(_raw);
@@ -489,10 +489,10 @@ function processResp(raw){
   const storyEnd=raw.indexOf("════");
   let storyRaw=storyEnd>-1?raw.slice(0,storyEnd):raw;
   storyRaw=storyRaw
+    .replace(/【[A-E]】[\s\S]*?(?=【[A-E]】|════|$)/g,"")
     .replace(/📋[\s\S]*?(?=\n\n|第\s*\d+\s*回合|童年|國小|國中|HBL|UBA|NBA|今天|這一天)/,"")
     .replace(/📰[^\n]*/g,"")
     .replace(/DELTA:[^\n]*/gi,"")
-    .replace(/感情[：:][\s\S]*?(?=\n\n|$)/,"")
     .replace(/\n{3,}/g,"\n\n")
     .trim();
 
