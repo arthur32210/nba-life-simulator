@@ -476,7 +476,7 @@ function processResp(raw){
 
   applyAging();
   const explicitRetire=/退休(演說|結局|結算|典禮|名人堂|正式退休)/.test(raw);
-  if(shouldForceRetire()||explicitRetire){updateHeader();renderStrip();renderStatRows();renderHist();triggerEnd();document.getElementById("options-list").innerHTML="";document.getElementById("free-toggle").style.display="none";return;}
+
 
   const opts=[];
   for(const blk of raw.split(/(?=【[A-E]】)/)){
@@ -512,6 +512,7 @@ function processResp(raw){
   }
   document.getElementById("free-toggle").style.display="block";
   updateHeader();renderStrip();renderStatRows();renderHist();
+  if(shouldForceRetire()||explicitRetire){document.getElementById("options-list").innerHTML="";document.getElementById("free-toggle").style.display="none";triggerEnd();return;}
   document.getElementById("bottom-anchor").scrollIntoView({behavior:"smooth"});
 }
 
