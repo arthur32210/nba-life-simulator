@@ -431,7 +431,8 @@ function processResp(raw){
   checkMilestones();
   checkAchievements();
 
-  if((raw.includes("退休")&&raw.includes("════"))||shouldForceRetire()){triggerEnd();const ol=document.getElementById("options-list");ol.innerHTML="";const rb=document.createElement("button");rb.className="primary-btn";rb.style.marginTop="16px";rb.textContent="🔄 重新開始";rb.onclick=function(){location.reload();};ol.appendChild(rb);document.getElementById("free-toggle").style.display="none";updateHeader();renderStrip();renderStatRows();renderHist();document.getElementById("bottom-anchor").scrollIntoView({behavior:"smooth"});return;}
+  const explicitRetire=/退休(演說|結局|結算|典禮|名人堂|正式退休)/.test(raw);
+  if(shouldForceRetire()||explicitRetire){triggerEnd();document.getElementById("options-list").innerHTML="";document.getElementById("free-toggle").style.display="none";return;}
 
   const opts=[];
   for(const blk of raw.split(/(?=【[A-E]】)/)){
