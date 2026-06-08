@@ -461,7 +461,8 @@ async function callGemini(msg,retryPolish=false){
         generationConfig:{maxOutputTokens:900,temperature:0.9}
       })
     });
-    if(resp.status===401){
+    const data=await resp.json().catch(()=>({}));
+    if(data.error==="INVALID_PASSWORD"){
       conversation.pop();
       localStorage.removeItem("nba_game_password");
       gamePassword="";
@@ -471,13 +472,12 @@ async function callGemini(msg,retryPolish=false){
       failWithError("遊戲密碼錯誤，請重新輸入。");
       return;
     }
-    if(!resp.ok){
+    if(data.error==="GEMINI_AUTH_ERROR"||data.error==="MISSING_GEMINI_API_KEY"){
       conversation.pop();
-      failWithError("Gemini 目前忙碌，請稍後再按「重試本回合」。");
+      failWithError(data.message||"Gemini API 設定錯誤");
       return;
     }
-    const data=await resp.json();
-    if(data.error){
+    if(!resp.ok){
       conversation.pop();
       failWithError("Gemini 目前忙碌，請稍後再按「重試本回合」。");
       return;
