@@ -94,16 +94,14 @@ button{-webkit-tap-highlight-color:transparent;cursor:pointer;}
     <div id="apikey-screen" style="display:flex;flex-direction:column;align-items:center;padding:40px 0;text-align:center">
       <div style="font-size:48px;margin-bottom:12px">🏀</div>
       <h1 style="font-size:22px;font-weight:900;margin-bottom:8px" class="grad-text">NBA 人生模擬器</h1>
-      <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:16px">Gemini 獨立版 · 脫離 Claude 單獨使用</p>
+      <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:16px">後端代理版 · 輸入遊戲密碼開始</p>
       <div style="font-size:12px;color:#64748b;line-height:1.9;margin-bottom:20px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:10px;padding:14px 16px;width:100%">
-        取得免費 Gemini API Key：<br/>
-        <a class="api-link" href="https://aistudio.google.com/apikey" target="_blank">👉 aistudio.google.com/apikey</a><br/>
-        （免費額度每分鐘60次，足夠遊戲使用）
+        請輸入遊戲密碼以開始遊戲。<br/><span style="color:#f97316">&#9888;&#65039; 含 R18 成人內容</span>
       </div>
-      <input id="apikey-input" class="api-input" type="password" placeholder="貼上你的 Gemini API Key" autocomplete="off"/>
-      <button class="primary-btn" onclick="saveApiKey()" style="width:100%">確認並開始 →</button>
-      <p style="font-size:10px;color:#334155;margin-top:12px">Key 只存在瀏覽器本地，不上傳伺服器</p>
-      <button onclick="localStorage.removeItem('nba_gemini_key');document.getElementById('apikey-input').value=''" style="background:transparent;border:none;color:#475569;font-size:10px;margin-top:8px;text-decoration:underline">清除已儲存的 Key</button>
+      <input id="apikey-input" class="api-input" type="password" placeholder="輸入遊戲密碼" autocomplete="off" onkeydown="if(event.key==='Enter')saveGamePassword()"/>
+      <button class="primary-btn" onclick="saveGamePassword()" style="width:100%">確認並開始 →</button>
+      <p style="font-size:10px;color:#334155;margin-top:12px">密碼存於瀏覽器本地</p>
+      <button onclick="localStorage.removeItem('nba_game_password');document.getElementById('apikey-input').value=''" style="background:transparent;border:none;color:#475569;font-size:10px;margin-top:8px;text-decoration:underline">清除已儲存的密碼</button>
     </div>
     <div id="setup-screen" class="setup-wrap" style="display:none">
       <div class="prog-bar" id="prog-bar"></div>
@@ -268,7 +266,7 @@ const ACH_DEF=[
   {id:"傳奇收尾",icon:"🍤",label:"傳奇收尾",check:()=>round>=190&&stats.fame>=70},
 ];
 
-let apiKey="",playerName="",position=null,background=null,trait=null;
+let gamePassword="",playerName="",position=null,background=null,trait=null;
 let lastUserMsg="";
 let hiddenFlags={rival:0,coachConflict:0,familyPressure:0,injurySeed:0,mediaHeat:0,scoutInterest:0,loveInterest:0,moneyTemptation:0,teamRole:"unknown"};
 let narrativeSummary="";
@@ -327,19 +325,19 @@ let tappedOpt=null,freeOpen=false,sOpen=false,hOpen=false;
 window.onload=()=>{
   const params=new URLSearchParams(location.search);
   if(params.get("reset")==="1"){
-    localStorage.removeItem("nba_gemini_key");
+    localStorage.removeItem("nba_game_password");
     sessionStorage.clear();
     apiKey="";
     history.replaceState(null,"",location.pathname);
   }
-  const k=localStorage.getItem("nba_gemini_key");
-  if(k){apiKey=k;showSetup();}
+  const p=localStorage.getItem("nba_game_password");
+  if(p){gamePassword=p;showSetup();}
 };
 
-function saveApiKey(){
-  const k=document.getElementById("apikey-input").value.trim();
-  if(!k||k.length<10){alert("請輸入有效的 Gemini API Key");return;}
-  apiKey=k; localStorage.setItem("nba_gemini_key",k); showSetup();
+function saveGamePassword(){
+  const p=document.getElementById("apikey-input").value.trim();
+  if(!p){alert("請輸入遊戲密碼");return;}
+  gamePassword=p; localStorage.setItem("nba_game_password",p); showSetup();
 }
 function applyAging(){
   if(round<140)return;
@@ -358,12 +356,6 @@ function applyAging(){
   }
 }
 
-function getGeminiHeaders(){
-  return {
-    "Content-Type":"application/json",
-    "x-goog-api-key":apiKey
-  };
-}
 
 function showSetup(){
   document.getElementById("apikey-screen").style.display="none";
@@ -456,64 +448,62 @@ async function callGemini(msg,retryPolish=false){
   document.getElementById("free-toggle").style.display="none";
   document.getElementById("free-row").className="";
   freeOpen=false;tappedOpt=null;
-
-  const ctx=`【玩家】名字:${playerName}|位置:${position.key}|背景:${background.key}|個性:${trait?trait.key:""}|業力:${karma}（勿告知玩家）
-目前階段:${getCurrentStage()}|目前回合:${round}/200
-數值:${Object.entries(stats).map(([k,v])=>k+":"+v).join(",")}
-體力:${stamina}/100
-壓力:${stress}/100|傷病風險:${injuryRisk}/100|媒體風評:${media}/100
-關係:教練信任${relations.coach}|隊友情誼${relations.teammates}|球迷支持${relations.fans}|家人關係${relations.familyRel}|感情關係${relations.partner}|經紀人能力${relations.agent}
-已達成里程碑:${milestones.length?milestones.join(","):"無"}
-已解鎖成就:${achievements.length?achievements.join(","):"無"}
-最近新聞:${headlines.slice(0,5).join("/")||"無"}
-最近一次選擇:${history.filter(h=>h.choice).slice(-1)[0]?.choice||"無"}
-最近三次選擇:${history.filter(h=>h.choice).slice(-3).map(h=>h.choice).join(" / ")||"無"}
-本回合事件指令:${getEventDirective()}
-人生摘要:${narrativeSummary||"無"}`
-  const _userTurn={role:"user",parts:[{text:ctx+"\n\n"+msg}]};
-  conversation.push(_userTurn);
-
-  let _lastErr="";let _raw="";
-  for(let _mi=0;_mi<GEMINI_MODELS.length;_mi++){
-    const _model=GEMINI_MODELS[_mi];
-    let _r,_d;
-    try{
-      _r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+_model+":generateContent",{
-        method:"POST",headers:getGeminiHeaders(),
-        body:JSON.stringify({system_instruction:{parts:[{text:SYSTEM_PROMPT}]},contents:conversation,generationConfig:{maxOutputTokens:900,temperature:0.95}})
-      });
-      _d=await _r.json().catch(()=>({}));
-    }catch(e){
-      if(_mi<GEMINI_MODELS.length-1){_lastErr="連線錯誤（"+_model+"）："+(e&&e.message?e.message:String(e));continue;}
-      failWithError("連線錯誤："+(e&&e.message?e.message:String(e)));return;
+  const ctx=`【玩家】名字:${playerName}|位置:${position.key}|背景:${background.key}|業力:${karma}（勿告知玩家）\n數値:${Object.entries(stats).map(([k,v])=>k+":"+v).join(",")}\n體力:${stamina}/100\n最近三次選擇:${history.filter(h=>h.choice).slice(-3).map(h=>h.choice).join(" / ")||"無"}\n本回合事件指令:${getEventDirective()}\n人生摘要:${narrativeSummary||"無"}`;
+  conversation.push({role:"user",parts:[{text:ctx+"\n\n"+msg}]});
+  try{
+    const resp=await fetch("/api/gemini",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        password:gamePassword,
+        system_instruction:{parts:[{text:SYSTEM_PROMPT}]},
+        contents:conversation.slice(-12),
+        generationConfig:{maxOutputTokens:900,temperature:0.9}
+      })
+    });
+    if(resp.status===401){
+      conversation.pop();
+      localStorage.removeItem("nba_game_password");
+      gamePassword="";
+      document.getElementById("game-screen").style.display="none";
+      document.getElementById("setup-screen").style.display="none";
+      document.getElementById("apikey-screen").style.display="flex";
+      failWithError("遊戲密碼錯誤，請重新輸入。");
+      return;
     }
-    if(!_r.ok||_d.error){
-      const _em=_d.error?_d.error.message:_r.statusText||"未知錯誤";
-      const _retry=[404,429,500,502,503,504].includes(_r.status);
-      if(_retry){_lastErr="API錯誤（"+_model+" / HTTP "+_r.status+"）："+_em;continue;}
-      failWithError("API錯誤（"+_model+" / HTTP "+_r.status+"）："+_em);return;
+    if(!resp.ok){
+      conversation.pop();
+      failWithError("Gemini 目前忙碌，請稍後再按「重試本回合」。");
+      return;
     }
-    const cand=_d.candidates&&_d.candidates[0];
-    const raw=cand&&cand.content&&cand.content.parts?cand.content.parts.map(p=>p.text||"").join("\n").trim():"";
-    if(!raw){
-      const reason=(_d.promptFeedback&&_d.promptFeedback.blockReason)||(cand&&cand.finishReason)||(_d.error&&_d.error.message)||"沒有回傳文字，可能被安全規則阻擋";
-      failWithError("API回應無文字："+reason);return;
+    const data=await resp.json();
+    if(data.error){
+      conversation.pop();
+      failWithError("Gemini 目前忙碌，請稍後再按「重試本回合」。");
+      return;
     }
-    _raw=raw;break;
+    const _raw=data.candidates?.[0]?.content?.parts?.[0]?.text||"";
+    if(!_raw){
+      conversation.pop();
+      failWithError("Gemini 目前忙碌，請稍後再按「重試本回合」。");
+      return;
+    }
+    const _storyCandidate=_raw.replace(/📋[\s\S]*?(?=\n\n)/,"").replace(/═{4}[\s\S]*/,"").trim();
+    const _hasOpts=/【[A-E]】/.test(_raw);
+    const _hasQ=/你會怎麼做/.test(_raw);
+    if(!retryPolish&&(_storyCandidate.length<80||!_hasQ||!_hasOpts)){
+      conversation.pop();
+      return callGemini(msg+"\n\n請重寫。這不是狀態報告，要像文字人生模擬器：有場景、衝突、情緒、五個【A】到【E】選項，每個選項含 DELTA。",true);
+    }
+    conversation.push({role:"model",parts:[{text:_raw}]});
+    round++;
+    updateNarrativeSummary(_raw);
+    processResp(_raw);
+  }catch(e){
+    conversation.pop();
+    failWithError("Gemini 目前忙碌，請稍後再按「重試本回合」。");
   }
-  if(!_raw){failWithError("Gemini 目前忙碌，請稍後再按「重試本回合」。");return;}
-const _storyCandidate=_raw.replace(/📋[\s\S]*?(?=\n\n)/,"").replace(/═{4}[\s\S]*/,"").trim();
-const _hasOpts=/【[A-E]】/.test(_raw);
-const _hasQ=/你會怎麼做/.test(_raw);
-if(!retryPolish&&(_storyCandidate.length<80||!_hasQ||!_hasOpts)){
-conversation.pop();
-return callGemini(msg+"\n\n請重寫。這不是狀態報告，要像文字人生模擬器：有場景、衝突、情緒、五個【A】到【E】選項，每個選項含 DELTA。",true);
 }
-  conversation.push({role:"model",parts:[{text:_raw}]});
-  conversation=conversation.slice(-12);
-  processResp(_raw);
-}
-
 function processResp(raw){
   showLoad(false);
   const sp={
